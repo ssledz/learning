@@ -13,6 +13,9 @@
     <module>antlr</module>
     <module>hazelcast</module>
     <module>spring</module>
+    <!--
+    <module>gwtp</module>
+    -->
   </modules>
 
 </project>

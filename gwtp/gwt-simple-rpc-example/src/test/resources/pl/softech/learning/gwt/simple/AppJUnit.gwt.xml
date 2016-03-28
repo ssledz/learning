@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module>
+	<!-- Inherit our applications main module. -->
+	<inherits name='pl.softech.learning.gwt.simple.App' />
+
+	<source path='client' />
+
+	<!-- Specify the path to any remote services. -->
+	<servlet path="/App/greet"
+		class="pl.softech.learning.gwt.simple.server.GreetingServiceImpl" />
+
+</module>

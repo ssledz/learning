@@ -1,0 +1,27 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+        xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:HTMLPanel>
+        <h1>Info</h1>
+
+        <p>Nulla non magna id nunc volutpat tincidunt. Morbi sed velit
+            sed
+            elit mattis laoreet. Fusce leo massa, sollicitudin nec hendrerit et,
+            pellentesque vitae tortor. Etiam eu lacus in felis sodales
+            rhoncus.
+            Nulla fermentum sodales arcu sed congue. Nunc molestie, augue et
+            congue pharetra, urna dolor bibendum risus, a consectetur lectus diam
+            ac purus. Nulla convallis mi sit amet elit semper vulputate. Aenean
+            congue, velit eu dapibus molestie, lacus dui lacinia dui, id
+            malesuada nisl turpis eget magna. Curabitur in gravida diam.
+            Etiam
+            viverra ullamcorper sapien et auctor. Praesent tincidunt, nisl at
+            tincidunt imperdiet, nisi est blandit diam, id vulputate lacus nulla
+            et tellus. Quisque ipsum mauris, sollicitudin et facilisis sit amet,
+            placerat fringilla erat. Praesent non condimentum erat.
+            Vestibulum
+            ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia
+            Curae;
+        </p>
+    </g:HTMLPanel>
+</ui:UiBinder>

@@ -1,0 +1,37 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style>
+		.root {
+		width: 500px;
+		margin-left: auto;
+		margin-right: auto;
+		}
+
+		.gwtp {
+		margin-bottom: 15px;
+		}
+
+		.label {
+		font-weight: bold;
+		}
+
+		.label-log {
+		color: red;
+		}
+	</ui:style>
+	<g:HTMLPanel styleName="{style.root}">
+
+		<h1>GWTP App Logging Example</h1>
+
+		<div class="{style.label}">Please enter some text:</div>
+		<g:TextBox ui:field="text" />
+		<g:Button ui:field="logButton">Log</g:Button>
+		<g:ListBox ui:field="loggingLevel" />
+		<g:Button ui:field="throwExceptionButton">Throw exception</g:Button>
+		<g:Button ui:field="throwCallStackSizeExceededException">Throw call stack size exceeded exception</g:Button>
+		<g:VerticalPanel ui:field="logArea" styleName="{style.label-log}" />
+
+	</g:HTMLPanel>
+</ui:UiBinder>
+

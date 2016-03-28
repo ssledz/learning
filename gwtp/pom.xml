@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>pl.softech.learning.gwtp</groupId>
+  <artifactId>learning-gwtp</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>learning-gwtp</name>
+  <url>http://maven.apache.org</url>
+
+  <licenses>
+    <license>
+      <name>Apache 2</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+      <comments>A business-friendly OSS license</comments>
+    </license>
+  </licenses>
+
+  <organization>
+    <name>SOF-TECH</name>
+    <url>http://sof-tech.pl</url>
+  </organization>
+
+  <properties>
+    <!-- client -->
+    <gwt.version>2.5.1</gwt.version>
+    <gwtp.version>1.0-RC-3.1</gwtp.version>
+    <gin.version>2.0.0</gin.version>
+    <gwt.style>OBF</gwt.style>
+
+    <!-- server -->
+    <guice.version>3.0</guice.version>
+    <aopalliance.version>1.0</aopalliance.version>
+    <slf4j.version>1.6.4</slf4j.version>
+    <logback.version>1.0.0</logback.version>
+    <spring.version>3.1.2.RELEASE</spring.version>
+    <cglib.version>2.2</cglib.version>
+
+    <!-- Shared -->
+    <guava.version>18.0</guava.version>
+
+    <lifecycle-mapping-plugin.version>1.0.0</lifecycle-mapping-plugin.version>
+    <maven.deploy.version>2.7</maven.deploy.version>
+    <maven-processor-plugin.version>2.1.0</maven-processor-plugin.version>
+    <maven.surfire.version>2.12</maven.surfire.version>
+    <maven.war.version>2.3</maven.war.version>
+    <maven.compiler.version>2.3.2</maven.compiler.version>
+    <maven-source-plugin.version>2.2</maven-source-plugin.version>
+
+    <!-- testing -->
+    <junit.version>4.11</junit.version>
+    <jukito.version>1.1</jukito.version>
+
+    <target.jdk>1.6</target.jdk>
+
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <webappDirectory>${project.build.directory}/${project.build.finalName}</webappDirectory>
+  </properties>
+
+  <repositories>
+    <!-- Use GWTP snapshots for the latest and greatest -->
+    <repository>
+      <id>sonatype.snapshots</id>
+      <name>Sonatype snapshot repository</name>
+      <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
+  <build>
+    <outputDirectory>${webappDirectory}/WEB-INF/classes</outputDirectory>
+
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>${maven.compiler.version}</version>
+          <configuration>
+            <source>${target.jdk}</source>
+            <target>${target.jdk}</target>
+            <encoding>${project.build.sourceEncoding}</encoding>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>${maven.surfire.version}</version>
+          <configuration>
+            <includes>
+              <include>**/*Test.java</include>
+            </includes>
+            <excludes>
+              <exclude>**/*GwtTest.java</exclude>
+            </excludes>
+          </configuration>
+        </plugin>
+
+        <!-- GWT -->
+        <!-- 'mvn gwt:run' - runs development mode -->
+        <!-- 'mvn gwt:debug' - runs debug mode -->
+        <!-- 'mvn gwt:compile' - compiles gwt -->
+        <!-- 'mvn integration-test' - runs the gwt tests (*GwtTest.java) -->
+        <!-- 'mvn clean gwt:compile deploy -DskipTests' - deploys to gae & sona 
+          with out running tests -->
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>gwt-maven-plugin</artifactId>
+          <version>${gwt.version}</version>
+          <configuration>
+            <strict>true</strict>
+
+            <testTimeOut>180</testTimeOut>
+            <includes>**/*GwtTest.java</includes>
+            <mode>htmlunit</mode>
+
+            <extraJvmArgs>-Xss1024K -Xmx512M -XX:MaxPermSize=256M</extraJvmArgs>
+            <logLevel>INFO</logLevel>
+            <style>${gwt.style}</style>
+
+            <copyWebapp>true</copyWebapp>
+            <hostedWebapp>${webappDirectory}</hostedWebapp>
+
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>test</goal>
+                <goal>compile</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>2.6</version>
+          <configuration>
+            <encoding>${project.build.sourceEncoding}</encoding>
+          </configuration>
+        </plugin>
+
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-war-plugin</artifactId>
+          <version>${maven.war.version}</version>
+          <executions>
+            <execution>
+              <phase>compile</phase>
+              <goals>
+                <goal>exploded</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <webappDirectory>${webappDirectory}</webappDirectory>
+            <webResources>
+              <resource>
+                <directory>src/main/webapp/WEB-INF</directory>
+                <filtering>true</filtering>
+                <targetPath>WEB-INF</targetPath>
+              </resource>
+            </webResources>
+          </configuration>
+        </plugin>
+
+        <!--This plugin's configuration is used to store Eclipse m2e settings 
+          only. It has no influence on the Maven build itself. -->
+        <plugin>
+          <groupId>org.eclipse.m2e</groupId>
+          <artifactId>lifecycle-mapping</artifactId>
+          <version>1.0.0</version>
+          <configuration>
+            <lifecycleMappingMetadata>
+              <pluginExecutions>
+                <pluginExecution>
+                  <pluginExecutionFilter>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>
+                      gwt-maven-plugin
+                    </artifactId>
+                    <versionRange>
+                      [2.5.1,)
+                    </versionRange>
+                    <goals>
+                      <goal>i18n</goal>
+                    </goals>
+                  </pluginExecutionFilter>
+                  <action>
+                    <ignore></ignore>
+                  </action>
+                </pluginExecution>
+              </pluginExecutions>
+            </lifecycleMappingMetadata>
+          </configuration>
+        </plugin>
+
+      </plugins>
+    </pluginManagement>
+  </build>
+
+
+  <dependencyManagement>
+    <dependencies>
+      <!-- GWTP -->
+      <dependency>
+        <groupId>com.gwtplatform</groupId>
+        <artifactId>gwtp-mvp-client</artifactId>
+        <version>${gwtp.version}</version>
+        <scope>provided</scope>
+        <!-- Not needed server-side -->
+      </dependency>
+      <dependency>
+        <groupId>com.gwtplatform</groupId>
+        <artifactId>gwtp-dispatch-client</artifactId>
+        <version>${gwtp.version}</version>
+        <scope>provided</scope>
+        <!-- Not needed server-side -->
+      </dependency>
+      <dependency>
+        <groupId>com.gwtplatform</groupId>
+        <artifactId>gwtp-dispatch-server-guice</artifactId>
+        <version>${gwtp.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-core</artifactId>
+        <version>${spring.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-web</artifactId>
+        <version>${spring.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.gwtplatform</groupId>
+        <artifactId>gwtp-dispatch-server-spring</artifactId>
+        <version>${gwtp.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.gwtplatform</groupId>
+        <artifactId>gwtp-crawler</artifactId>
+        <version>${gwtp.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.gwtplatform</groupId>
+        <artifactId>gwtp-crawler-service</artifactId>
+        <version>${gwtp.version}</version>
+      </dependency>
+
+      <!-- GWT dependencies -->
+      <dependency>
+        <groupId>com.google.gwt</groupId>
+        <artifactId>gwt-user</artifactId>
+        <version>${gwt.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.google.gwt</groupId>
+        <artifactId>gwt-servlet</artifactId>
+        <version>${gwt.version}</version>
+        <scope>runtime</scope>
+      </dependency>
+
+      <!-- DI dependencies -->
+      <dependency>
+        <groupId>cglib</groupId>
+        <artifactId>cglib-nodep</artifactId>
+        <version>${cglib.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.inject</groupId>
+        <artifactId>guice</artifactId>
+        <version>${guice.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.inject.extensions</groupId>
+        <artifactId>guice-servlet</artifactId>
+        <version>${guice.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.inject.extensions</groupId>
+        <artifactId>guice-assistedinject</artifactId>
+        <version>${guice.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>aopalliance</groupId>
+        <artifactId>aopalliance</artifactId>
+        <version>${aopalliance.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.gwt.inject</groupId>
+        <artifactId>gin</artifactId>
+        <version>${gin.version}</version>
+        <scope>provided</scope>
+        <!-- Not needed server-side -->
+      </dependency>
+
+      <!-- Utils -->
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>${guava.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava-gwt</artifactId>
+        <version>${guava.version}</version>
+      </dependency>
+
+      <!-- Logging -->
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>jcl-over-slf4j</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>log4j-over-slf4j</artifactId>
+        <version>${slf4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-classic</artifactId>
+        <version>${logback.version}</version>
+      </dependency>
+
+      <!-- Testing -->
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>${junit.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.jukito</groupId>
+        <artifactId>jukito</artifactId>
+        <version>${jukito.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>com.google.gwt</groupId>
+        <artifactId>gwt-dev</artifactId>
+        <version>${gwt.version}</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <modules>
+    <module>gwtp-tab-example</module>
+    <module>gwtp-simple-example</module>
+    <module>gwtp-logging-example</module>
+    <module>gwtp-spring-example</module>
+    <module>gwt-simple-example</module>
+    <module>gwt-simple-rpc-example</module>
+    <module>gwt-widgets</module>
+  </modules>
+</project>

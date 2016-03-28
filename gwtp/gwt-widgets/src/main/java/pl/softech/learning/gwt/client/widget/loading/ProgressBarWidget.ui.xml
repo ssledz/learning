@@ -1,0 +1,25 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+	xmlns:g='urn:import:com.google.gwt.user.client.ui' xmlns:d="urn:import:com.google.gwt.dom.client">
+
+	<ui:style>
+	.shell {
+		position: relative;
+	}
+	
+	.bar {
+		height: 100%;
+	}
+	
+	.text {
+		position: absolute;
+		top: 0px;
+	}
+	</ui:style>
+
+	<g:HTMLPanel styleName="{style.shell} gwt-ProgressBar-shell">
+		<div ui:field="barElement" class="{style.bar} gwt-ProgressBar-bar" />
+		<div ui:field="textElement" class="{style.text} gwt-ProgressBar-text" />
+	</g:HTMLPanel>
+</ui:UiBinder>

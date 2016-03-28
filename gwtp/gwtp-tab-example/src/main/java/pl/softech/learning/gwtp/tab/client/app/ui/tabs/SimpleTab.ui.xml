@@ -1,0 +1,29 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+	xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+	<ui:style src='defines.css'
+		type='pl.softech.learning.gwtp.tab.client.app.ui.tabs.BaseTab.Style'>
+			.tab {
+				float: left;
+				margin-right: 8px;
+			}
+			
+			.tab a,.tab a:visited,.tab a:hover {
+				text-decoration: none;
+				cursor: pointer;
+				cursor: hand;
+				color: black;
+			}
+			
+			.active {
+				background-color: lightPanelColor;
+			}
+			
+			.inactive {
+				background-color: darkPanelColor;
+			}
+		</ui:style>
+
+	<g:Hyperlink ui:field="hyperlink" addStyleNames="{style.tab} {style.inactive}" />
+</ui:UiBinder>
