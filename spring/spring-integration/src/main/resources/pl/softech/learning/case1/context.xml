@@ -1,0 +1,31 @@
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:int="http://www.springframework.org/schema/integration"
+    xmlns:int-sftp="http://www.springframework.org/schema/integration/sftp" xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/integration
+           http://www.springframework.org/schema/integration/spring-integration.xsd
+           http://www.springframework.org/schema/integration/sftp 
+           http://www.springframework.org/schema/integration/sftp/spring-integration-sftp.xsd
+           http://www.springframework.org/schema/context 
+           http://www.springframework.org/schema/context/spring-context.xsd"
+>
+    <context:property-placeholder location="file:///home/ssledz/spring-test/spring-fundamentals-int.properties"/>
+    <bean id="sftpSessionFactory" class="org.springframework.integration.sftp.session.DefaultSftpSessionFactory">
+        <property name="host" value="localhost"/>
+        <property name="user" value="${ssh.user}"/>
+        <property name="privateKey" value="${ssh.privateKey}"/>
+        <property name="privateKeyPassphrase" value="${ssh.privateKeyPassphrase}"/>
+        <property name="timeout" value="10000"/>
+    </bean>
+    <int-sftp:outbound-channel-adapter id="sftpOutboudAdapter" channel="outputFilesChannel"
+        session-factory="sftpSessionFactory" remote-directory="${spring-int.case1.remote-directory}" remote-filename-generator-expression="headers.outputFileName"
+        use-temporary-file-name="true" charset="UTF-8" mode="REPLACE" remote-file-separator="/"/>
+    <int:channel id="outputFilesChannel"/>
+    <int:gateway id="sftpFileUploadGateway" service-interface="pl.softech.learning.case1.FileUploadGateway"
+        default-request-channel="outputFilesChannel"/>
+    <int:gateway id="sftpRenameFileGateway" service-interface="pl.softech.learning.case1.RenameFileGateway"
+        default-request-channel="inbound"/>
+    <int-sftp:outbound-gateway session-factory="sftpSessionFactory" request-channel="inbound" command="mv"
+        expression="'${spring-int.case1.remote-directory}' + payload" rename-expression="'${spring-int.case1.remote-directory}' + headers.dest"
+        reply-channel="nullChannel"/>
+</beans>
