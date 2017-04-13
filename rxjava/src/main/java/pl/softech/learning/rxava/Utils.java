@@ -1,6 +1,9 @@
 package pl.softech.learning.rxava;
 
+import rx.Observable;
 import rx.Observer;
+
+import java.util.stream.Stream;
 
 /**
  * @author ssledz
@@ -11,27 +14,40 @@ public final class Utils {
     private Utils() {
     }
 
-    public static void title(String title) {
-        System.out.println(String.format("\n\n%s\n", title));
+    public static void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
-    public static <T> Observer<T> createGenericObserver() {
-        return new Observer<T>() {
+    public static void title(String title) {
+        System.out.println();
+        System.out.println(title);
+        Stream.generate(() -> "-").limit(title.length()).forEach(System.out::print);
+        System.out.println();
+    }
 
+    public static <T> void subscribePrint(Observable<T> observable, String name) {
+
+        observable.subscribe(new Observer<T>() {
             @Override
             public void onCompleted() {
-                System.out.println("on Completed");
+                System.out.printf("%s completed !\n", name);
             }
 
             @Override
             public void onError(Throwable e) {
-                System.out.println("on Error");
+                System.out.printf("Error from %s : %s\n", name, e.getMessage());
             }
 
             @Override
-            public void onNext(T item) {
-                System.out.println(String.format("Item is %s", item));
+            public void onNext(T t) {
+                System.out.printf("%s : %s\n", name, t);
             }
-        };
+        });
+
     }
+
 }
