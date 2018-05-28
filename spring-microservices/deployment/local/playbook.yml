@@ -1,0 +1,40 @@
+---
+- hosts: all
+  become: true
+  vars_files:
+    - vars.yml
+  strategy: free
+
+  gather_facts: False
+  pre_tasks:
+    - name: Install python2 for Ansible
+      raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+      register: output
+      changed_when: output.stdout != ""
+    - name: Gathering Facts
+      setup:
+
+  tasks:
+    - name: Add the docker signing key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg 
+        state: present
+    - name: Add the docker APT repo
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic edge
+        state: present
+        filename: docker-io
+    - name: Install packages
+      apt:
+        name: "{{ item }}"
+        state: present
+        force: yes
+        update_cache: yes
+      with_items: "{{ PACKAGES }}"
+    - name: Add vagrant user to docker group
+      user:
+        name: vagrant
+        groups: docker
+        append: yes
+
+
