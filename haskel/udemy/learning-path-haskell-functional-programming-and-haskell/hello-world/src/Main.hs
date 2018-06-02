@@ -2,4 +2,9 @@ module Main where
 
 main :: IO ()
 main = do
-  putStrLn "hello world"
+  content <- readFile "numbers.txt"
+  putStrLn "---"
+  putStrLn content
+  -- print is used for diagnostic purposes
+  print content
+  putStrLn "---"
