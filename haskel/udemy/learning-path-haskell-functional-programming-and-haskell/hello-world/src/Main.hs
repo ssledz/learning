@@ -8,3 +8,8 @@ main = do
   -- print is used for diagnostic purposes
   print content
   putStrLn "---"
+
+myfun = do
+  let x = 1
+  putStrLn $ show x
+
