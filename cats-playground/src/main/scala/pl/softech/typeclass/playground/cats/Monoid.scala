@@ -6,7 +6,7 @@ import cats.{Eq, Monoid}
 
 case class BooleanOr(value: Boolean)
 
-object MonoidInstances {
+private object MonoidInstances {
 
   implicit val booleanOrMonoid: Monoid[BooleanOr] = new Monoid[BooleanOr] {
     override def empty: BooleanOr = BooleanOr(true)
@@ -24,7 +24,7 @@ object MonoidInstances {
 
 }
 
-object EqInstances {
+private object MyEqInstances {
   implicit val eqBooleanOr: Eq[BooleanOr] = (x: BooleanOr, y: BooleanOr) => x == y
 }
 
@@ -33,7 +33,7 @@ case class Order(totalCost: Double, quantity: Double)
 
 object MonoidTest extends App {
 
-  import EqInstances._
+  import MyEqInstances._
   import MonoidInstances._
 
   val x1 = Monoid[BooleanOr].empty
