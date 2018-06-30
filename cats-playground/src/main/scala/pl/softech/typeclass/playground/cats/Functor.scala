@@ -27,10 +27,10 @@ object MyFunctor {
 
 object FunctorTest extends App {
 
-  import MyFunctor._
   import MyFunctor.FunctorInstances._
+  import MyFunctor._
 
-  val tree : Tree[Int] = Branch(Branch(Leaf(1), Branch(Leaf(2), Leaf(3))), Branch(Leaf(4), Leaf(5)))
+  val tree: Tree[Int] = Branch(Branch(Leaf(1), Branch(Leaf(2), Leaf(3))), Branch(Leaf(4), Leaf(5)))
 
   println(tree)
 
@@ -41,5 +41,21 @@ object FunctorTest extends App {
   val tree2 = tree.map(_ * 5)
   println(tree2)
 
+
+  val inc = (x: Int) => x + 1
+  val optInc = Functor[Option].lift(inc)
+
+
+  println(inc(1))
+  println(optInc(Option(1)))
+
+  val f1 = (a : Int) => a + 1
+  val f2 = (a : Int) => a * 2
+  val f3 = (a : Int) => a + "!"
+  val f4 = f1.map(f2).map(f3)
+  val f5 = f1.andThen(f2).andThen(f3)
+
+  println(f4(13))
+  println(f5(13))
 
 }
