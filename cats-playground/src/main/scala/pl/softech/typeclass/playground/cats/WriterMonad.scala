@@ -1,7 +1,9 @@
 package pl.softech.typeclass.playground.cats
 
 import cats.data.Writer
+import cats.data.State
 import cats.implicits._
+import pl.softech.typeclass.playground.cats.MyWriterMonad.Logged
 
 
 object MyWriterMonad {
@@ -18,13 +20,15 @@ object MyWriterMonad {
     case _ => contact.pure[Logged]
   }
 
-  def filterByAgeGt(contact: Option[Contact], age: Int): Logged[Option[Contact]] =
-    contact.pure[Logged]
+  def filterByAgeGt(contact: Option[Contact], age: Int): Logged[Option[Contact]] = contact match {
+    case Some(_) => contact.pure[Logged]
       .flatMap { _ =>
         if (contact.exists(c => c.age >= age))
           contact.pure[Logged]
         else Writer(Vector(s"$contact filtered out beacuse age < $age"), None)
       }
+    case _ => contact.pure[Logged]
+  }
 
 
   def filterContacts(contacts: Seq[Contact]): Logged[Seq[Contact]] = {
@@ -44,13 +48,26 @@ object MyWriterMonad {
     res2
   }
 
-  def filterContact(contact: Contact): Logged[Option[Contact]] = {
+  def filterContact2(contact: Contact): Logged[Option[Contact]] = {
 
     for {
       c <- Option(contact).pure[Logged]
       r1 <- filterByFirstName(c, "Adam")
       r2 <- filterByAgeGt(r1, 12)
     } yield r2
+
+  }
+
+  def filterContact(contact: Contact): Logged[Option[Contact]] = {
+    import State._
+    type LoggedSt = Logged[Option[Contact]]
+    val filter: State[LoggedSt, LoggedSt] = for {
+      c <- get[LoggedSt]
+      _ <- modify[LoggedSt](_.flatMap(c => filterByFirstName(c, "Adam")))
+      _ <- modify[LoggedSt](_.flatMap(c => filterByAgeGt(c, 12)))
+    } yield c
+
+    filter.runS(Option(contact).pure[Logged]).value
 
   }
 
@@ -70,6 +87,6 @@ object MyWriterTest extends App {
   //  println(filterContacts(contacts))
   println(filterContacts(contacts))
   //  println(filterContact(contacts(0)))
-  //  println(filterContact(contacts(1)))
+  println(filterContact(contacts(1)))
 
 }
