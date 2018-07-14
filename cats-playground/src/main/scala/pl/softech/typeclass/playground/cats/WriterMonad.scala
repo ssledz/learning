@@ -1,8 +1,9 @@
 package pl.softech.typeclass.playground.cats
 
-import cats.data.Writer
-import cats.data.State
+import cats.Monad
+import cats.data.{State, Writer}
 import cats.implicits._
+import pl.softech.typeclass.playground.cats.MyGenericLoggedFiltering.Logged
 import pl.softech.typeclass.playground.cats.MyWriterMonad.Logged
 
 
@@ -30,8 +31,26 @@ object MyWriterMonad {
     case _ => contact.pure[Logged]
   }
 
+  def sequence[F[_], A](in: Seq[F[A]])(implicit m: Monad[F]): F[Seq[A]] = {
+    val zero = m.pure(Seq.empty[A])
+    in.foldLeft(zero)(
+      (acc: F[Seq[A]], el: F[A]) => {
+        m.flatMap(acc)(l => {
+          m.map(el)(e => l :+ e)
+        })
+      }
+    )
+  }
 
   def filterContacts(contacts: Seq[Contact]): Logged[Seq[Contact]] = {
+    val res = for {
+      contact <- contacts
+    } yield filterContact(contact)
+
+    sequence(res).map(_.flatten)
+  }
+
+  def filterContacts2(contacts: Seq[Contact]): Logged[Seq[Contact]] = {
     val res = for {
       contact <- contacts
     } yield filterContact(contact)
@@ -73,9 +92,36 @@ object MyWriterMonad {
 
 }
 
+object MyGenericLoggedFiltering {
+
+  type Logged[A] = Writer[Vector[String], A]
+
+  def filter[A](f: A => Logged[Option[A]])(xs: Seq[A]): Logged[Seq[A]] = {
+
+    def sequence[A](xs: Seq[Logged[A]]) : Logged[Seq[A]] = {
+      val zero = Seq.empty[A].pure[Logged]
+      xs.foldLeft(zero)(
+        (acc: Logged[Seq[A]], el: Logged[A]) => {
+          acc.flatMap(l => {
+            el.map(e => l :+ e)
+          })
+        }
+      )
+    }
+
+    val res = for {
+      x <- xs
+    } yield f(x)
+
+    sequence(res).map(_.flatten)
+  }
+
+}
+
 object MyWriterTest extends App {
 
   import MyWriterMonad._
+  import MyGenericLoggedFiltering._
 
   val contacts = Seq(
     Contact("Adam", "Warka", 16),
@@ -88,5 +134,11 @@ object MyWriterTest extends App {
   println(filterContacts(contacts))
   //  println(filterContact(contacts(0)))
   println(filterContact(contacts(1)))
+
+  println(sequence(List(Option(1), Option(2))))
+
+  def filteringContacts = filter(filterContact) _
+
+  println(filteringContacts(contacts))
 
 }
