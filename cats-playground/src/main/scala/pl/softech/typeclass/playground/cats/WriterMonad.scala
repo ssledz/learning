@@ -3,8 +3,6 @@ package pl.softech.typeclass.playground.cats
 import cats.Monad
 import cats.data.{State, Writer}
 import cats.implicits._
-import pl.softech.typeclass.playground.cats.MyGenericLoggedFiltering.Logged
-import pl.softech.typeclass.playground.cats.MyWriterMonad.Logged
 
 
 object MyWriterMonad {
@@ -97,31 +95,27 @@ object MyGenericLoggedFiltering {
   type Logged[A] = Writer[Vector[String], A]
 
   def filter[A](f: A => Logged[Option[A]])(xs: Seq[A]): Logged[Seq[A]] = {
-
-    def sequence[A](xs: Seq[Logged[A]]) : Logged[Seq[A]] = {
+    def sequence[A](xs: Seq[Logged[A]]): Logged[Seq[A]] = {
       val zero = Seq.empty[A].pure[Logged]
       xs.foldLeft(zero)(
-        (acc: Logged[Seq[A]], el: Logged[A]) => {
-          acc.flatMap(l => {
-            el.map(e => l :+ e)
-          })
-        }
+        (acc: Logged[Seq[A]], el: Logged[A]) => acc.flatMap(l => el.map(e => l :+ e))
       )
     }
 
-    val res = for {
-      x <- xs
-    } yield f(x)
-
-    sequence(res).map(_.flatten)
+    sequence(xs.map(f)).map(_.flatten)
   }
 
+  def aggregate[A](xs: List[Option[A] => Logged[Option[A]]]): A => Logged[Option[A]] =
+    sub =>
+      xs.foldLeft(Option(sub).pure[Logged]) {
+        (acc: Logged[Option[A]], el) => acc.flatMap(el)
+      }
 }
 
 object MyWriterTest extends App {
 
-  import MyWriterMonad._
   import MyGenericLoggedFiltering._
+  import MyWriterMonad._
 
   val contacts = Seq(
     Contact("Adam", "Warka", 16),
@@ -131,14 +125,27 @@ object MyWriterTest extends App {
   )
 
   //  println(filterContacts(contacts))
-  println(filterContacts(contacts))
+  //  println(filterContacts(contacts))
   //  println(filterContact(contacts(0)))
-  println(filterContact(contacts(1)))
+  //  println(filterContact(contacts(1)))
 
-  println(sequence(List(Option(1), Option(2))))
+  //  println(sequence(List(Option(1), Option(2))))
 
   def filteringContacts = filter(filterContact) _
 
+  val contactPredicate: Contact => MyGenericLoggedFiltering.Logged[Option[Contact]] =
+    aggregate(List(
+      filterByFirstName(_, "Adam"),
+      filterByAgeGt(_, 12)
+    ))
+
+  def filteringContacts2 = filter(contactPredicate) _
+
   println(filteringContacts(contacts))
+  println(filteringContacts2(contacts))
+
+  val ops = Seq((_: Int) + 1, (_: Int) * 2)
+  val x = ops.reduce(_ andThen _)
+  //  println(x(2))
 
 }
