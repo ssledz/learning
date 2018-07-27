@@ -1,0 +1,40 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+<soap:Body>
+    <NotifyContactState xmlns="http://tempuri.org/">
+        <notificationList>
+            <xs:schema xmlns:mstns="http://tempuri.org/NotificationList.xsd" xmlns="http://tempuri.org/NotificationList.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="NotificationList" targetNamespace="http://tempuri.org/NotificationList.xsd" attributeFormDefault="qualified" elementFormDefault="qualified">
+                <xs:element name="NotificationList" msdata:IsDataSet="true" msdata:Locale="en-US">
+                    <xs:complexType>
+                        <xs:choice minOccurs="0" maxOccurs="unbounded">
+                            <xs:element name="Notification">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="ContactID" type="xs:int" minOccurs="0"/>
+                                        <xs:element name="ServiceID" type="xs:int" minOccurs="0"/>
+                                        <xs:element name="Notification" type="xs:unsignedByte" minOccurs="0"/>
+                                        <xs:element name="BusinessOutcome" type="xs:string" minOccurs="0"/>
+                                        <xs:element name="ListID" type="xs:int" minOccurs="0"/>
+                                        <xs:element name="AgentID" type="xs:int" minOccurs="0"/>
+                                        <xs:element name="NextTry" type="xs:dateTime" minOccurs="0"/>
+                                    </xs:sequence>
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:choice>
+                    </xs:complexType>
+                </xs:element>
+            </xs:schema>
+            <diffgr:diffgram xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns:diffgr="urn:schemas-microsoft-com:xml-diffgram-v1">
+                <NotificationList xmlns="http://tempuri.org/NotificationList.xsd">
+                    <Notification diffgr:id="Notification1" msdata:rowOrder="0">
+                        <ContactID>1</ContactID>
+                        <ServiceID>1</ServiceID>
+                        <Notification>1</Notification>
+                        <BusinessOutcome>outcome</BusinessOutcome>
+                    </Notification>
+                </NotificationList>
+            </diffgr:diffgram>
+        </notificationList>
+    </NotifyContactState>
+</soap:Body>
+</soap:Envelope>
+
