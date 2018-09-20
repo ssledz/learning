@@ -1,6 +1,6 @@
-package pl.softech.learning.ch1
+package pl.softech.learning.ch2
 
-import pl.softech.learning.ch1.Ex4._
+import pl.softech.learning.ch2.Ex4._
 
 object Ex5 {
 

@@ -1,4 +1,4 @@
-package pl.softech.learning.ch1
+package pl.softech.learning.ch2
 
 object Ex6 {
 
