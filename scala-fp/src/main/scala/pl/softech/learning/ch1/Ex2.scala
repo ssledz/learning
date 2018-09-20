@@ -21,12 +21,12 @@ object Ex2 {
     go(0, 0, as.length - 1)
   }
 
-  def isSorted[A](xs: Array[A], gt: (A, A) => Boolean): Boolean = {
+  def isSorted[@specialized A](xs: Array[A], gt: (A, A) => Boolean): Boolean = {
 
     val ub = xs.size - 1
 
     @tailrec
-    def isSorted[@specialized A](i: Int, acc: Boolean): Boolean = {
+    def isSorted[A](i: Int, acc: Boolean): Boolean = {
 
       if (!acc) false
       else if (i == ub) acc
