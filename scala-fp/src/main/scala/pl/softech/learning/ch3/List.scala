@@ -38,7 +38,6 @@ object List {
   object Implicits extends Ex2.Implicits with Ex3.Implicits with Ex4.Implicits with Ex5.Implicits
     with Ex6.Implicits with Ex7.Implicits with Ex9.Implicits with Ex10.Implicits
     with Ex12.Implicits with Ex14.Implicits with Ex15.Implicits with Ex18.Implicits
-    with Ex19.Implicits with Ex20.Implicits with Ex21.Implicits with Ex22.Implicits
-    with Ex23.Implicits with Ex24.Implicits
+    with Ex19.Implicits with Ex20.Implicits with Ex23.Implicits with Ex24.Implicits
 
 }

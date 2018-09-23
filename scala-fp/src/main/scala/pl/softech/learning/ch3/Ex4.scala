@@ -20,6 +20,8 @@ object Ex4 {
 
     implicit class Ex4ListOpts[A](l: List[A]) {
 
+      def headOpt: Option[A] = Ex4.headOpt(l)
+
       def head: A = Ex4.head(l)
 
       def dropWhile(f: A => Boolean): List[A] = Ex4.dropWhile(l)(f)
