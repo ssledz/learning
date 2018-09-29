@@ -2,36 +2,32 @@ package pl.softech.learning.ch3
 
 import pl.softech.learning.ch3.List.Implicits._
 
+import scala.annotation.tailrec
+
 object Ex4 {
 
-  def headOpt[A](l: List[A]): Option[A] = l match {
-    case Cons(h, _) => Some(h)
-    case Nil => None
+
+  def drop[A](n: Int, l: List[A]): List[A] = {
+
+    @tailrec
+    def drop(n: Int, acc: List[A]): List[A] =
+      if (n == 0) acc
+      else drop(n - 1, acc.tail)
+
+    drop(n, l)
   }
-
-  def head[A](l: List[A]): A = headOpt(l).getOrElse(throw new NoSuchElementException("head of empty list"))
-
-  def dropWhile[A](l: List[A])(f: A => Boolean): List[A] =
-    if (f(head(l))) dropWhile(l.tail)(f)
-    else l
-
 
   trait Implicits {
 
     implicit class Ex4ListOpts[A](l: List[A]) {
-
-      def headOpt: Option[A] = Ex4.headOpt(l)
-
-      def head: A = Ex4.head(l)
-
-      def dropWhile(f: A => Boolean): List[A] = Ex4.dropWhile(l)(f)
-
+      def drop(n: Int): List[A] = Ex4.drop(n, l)
     }
 
   }
 
   def main(args: Array[String]): Unit = {
-    println(List(1, 1, 2, 3, 4, 5).dropWhile(_ < 3))
+    println(List(1, 2, 3, 4, 5).drop(2))
   }
+
 
 }

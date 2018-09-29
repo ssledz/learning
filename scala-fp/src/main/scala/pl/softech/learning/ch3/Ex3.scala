@@ -2,32 +2,23 @@ package pl.softech.learning.ch3
 
 import pl.softech.learning.ch3.List.Implicits._
 
-import scala.annotation.tailrec
-
 object Ex3 {
 
-
-  def drop[A](n: Int, l: List[A]): List[A] = {
-
-    @tailrec
-    def drop(n: Int, acc: List[A]): List[A] =
-      if (n == 0) acc
-      else drop(n - 1, acc.tail)
-
-    drop(n, l)
+  def setHead[A](l: List[A], a: A): List[A] = l match {
+    case Cons(h, t) => Cons(a, t)
+    case Nil => Cons(a, Nil)
   }
 
   trait Implicits {
 
     implicit class Ex3ListOpts[A](l: List[A]) {
-      def drop(n: Int): List[A] = Ex3.drop(n, l)
+      def setHead(a: A): List[A] = Ex3.setHead(l, a)
     }
 
   }
 
   def main(args: Array[String]): Unit = {
-    println(List(1, 2, 3, 4, 5).drop(2))
+    println(List(1, 2, 3, 4, 5).setHead(9))
   }
-
 
 }
