@@ -15,7 +15,7 @@ object Ex5 {
     }
   }
 
-
+  def sequence[A](a: List[Option[A]]): Option[List[A]] = traverse(a)(identity)
 
   def main(args: Array[String]): Unit = {
     println(traverse(List("1", "2"))(i => Try(i.toInt)))
