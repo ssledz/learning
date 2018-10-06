@@ -39,3 +39,17 @@ case object None extends Option[Nothing] {
 
   override def filter(f: Nothing => Boolean): Option[Nothing] = None
 }
+
+object Option {
+
+  def lift[A, B](f: A => B): Option[A] => Option[B] = _ map f
+
+  def Try[A](a: => A): Option[A] =
+    try Some(a)
+    catch {
+      case e: Exception => None
+    }
+
+  object Implicits extends Ex3.Implicits
+
+}
