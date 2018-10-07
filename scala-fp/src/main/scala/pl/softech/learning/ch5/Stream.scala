@@ -5,6 +5,16 @@ sealed trait Stream[+A] {
     case Empty => None
     case Cons(h, t) => Some(h())
   }
+
+  def foldRight[B](z: => B)(f: (A, => B) => B): B =
+    this match {
+      case Cons(h, t) => f(h(), t().foldRight(z)(f))
+      case _ => z
+    }
+
+  def exists(p: A => Boolean): Boolean =
+    foldRight(false)((a, b) => p(a) || b)
+
 }
 
 case object Empty extends Stream[Nothing]
@@ -25,4 +35,9 @@ object Stream {
     else cons(as.head, apply(as.tail: _*))
 
   object Implicits extends Ex1.Implicits with Ex2.Implicits with Ex3.Implicits
+    with Ex4.Implicits with Ex6.Implicits with Ex7.Implicits
+    with Ex13.Implicits with Ex14.Implicits with Ex15.Implicits
+    with Ex16.Implicits
+
+
 }
