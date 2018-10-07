@@ -24,5 +24,5 @@ object Stream {
     if (as.isEmpty) empty
     else cons(as.head, apply(as.tail: _*))
 
-  object Implicits extends Ex1.Implicits
+  object Implicits extends Ex1.Implicits with Ex2.Implicits with Ex3.Implicits
 }
