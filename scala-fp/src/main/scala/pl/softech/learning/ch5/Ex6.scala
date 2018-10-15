@@ -2,7 +2,9 @@ package pl.softech.learning.ch5
 
 object Ex6 {
 
-  def headOption[A](s: Stream[A]): Option[A] = ???
+  def headOption[A](s: Stream[A]): Option[A] = s.foldRight[Option[A]](None){
+    (a, acc) => Some(a)
+  }
 
   trait Implicits {
 
