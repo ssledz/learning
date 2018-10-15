@@ -17,10 +17,10 @@ object Ex7 {
   }
 
   def filter[A](s: Stream[A])(p: A => Boolean): Stream[A] = s.foldRight(Stream.empty[A]) {
-    (a, acc) => if(p(a)) Stream.cons(a, acc) else Stream.empty[A]
+    (a, acc) => if(p(a)) Stream.cons(a, acc) else acc
   }
 
-  def append[A](s: Stream[A], a: A): Stream[A] = ???
+  def append[A](s: Stream[A], a: A): Stream[A] = concat(s, Stream.cons(a, Stream.empty))
 
   trait Implicits {
 
