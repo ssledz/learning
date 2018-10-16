@@ -14,12 +14,16 @@ object Ex15 {
 
     implicit class Ex15Opts[A](s: Stream[A]) {
       def tails: Stream[Stream[A]] = Ex15.tails(s)
+
+      def hasSubsequence(s: Stream[A]): Boolean = tails exists (_ startsWith s)
     }
 
   }
 
   def main(args: Array[String]): Unit = {
     println(Stream(1, 2, 3, 4).tails.map(_.toList).toList)
+    println(Stream(1, 2, 3, 4).hasSubsequence(Stream(2, 3)))
+    println(Stream(1, 2, 3, 4).hasSubsequence(Stream(2, 3, 1)))
   }
 
 }
