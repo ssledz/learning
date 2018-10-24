@@ -2,13 +2,11 @@ package pl.softech
 
 import java.time._
 
-import io.circe.generic.extras.Configuration
 import io.circe.syntax._
 
-object DemoAutoDerivation extends App {
+object DemoCustomAutoDerivation extends App {
 
-  import io.circe.generic.auto._
-  import io.circe.java8.time._
+  import json.codecs._
 
   val movie = Movie("Coherence", Drama, List(
     RemoteReview(Some("http://www.imdb.com/title/tt2866360/reviews?ref_=tt_ov_rt"), 9),
