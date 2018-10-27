@@ -13,7 +13,7 @@ object Ex5 {
       (f(a), rng2)
     }
 
-  def double(rng: RNG): (Double, RNG) = ???
+  def double(rng: RNG): (Double, RNG) = map(Ex1.nonNegativeInt)(x => x.toDouble / Int.MaxValue)(rng)
 
   trait Implicits {
 

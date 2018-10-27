@@ -6,7 +6,13 @@ import pl.softech.learning.ch6.RNG.{Rand, _}
 
 object Ex6 {
 
-  def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] = ???
+  def map2[A, B, C](ra: Rand[A], rb: Rand[B])(f: (A, B) => C): Rand[C] =
+    rng => {
+      val (x, r) = ra(rng)
+      val (y, r2) = rb(r)
+      (f(x, y), r2)
+    }
+
 
   def both[A, B](ra: Rand[A], rb: Rand[B]): Rand[(A, B)] = map2(ra, rb)((_, _))
 
@@ -28,6 +34,7 @@ object Ex6 {
     val (x, rng2) = int(rng)
     println((x, rng2))
     println(int(rng2))
+    println(both(int, int)(rng))
     println(int.map2(int)(_ + _)(rng))
     println(randDoubleInt(rng))
     println(randIntDouble(rng))

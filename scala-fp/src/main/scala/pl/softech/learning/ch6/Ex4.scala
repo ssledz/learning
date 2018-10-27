@@ -4,7 +4,14 @@ import pl.softech.learning.ch6.RNG.Implicits._
 
 object Ex4 {
 
-  def ints(count: Int)(rng: RNG): (List[Int], RNG) = ???
+  def ints(count: Int)(rng: RNG): (List[Int], RNG) = {
+    if (count <= 0) (Nil, rng)
+    else {
+      val (x, r) = rng.nextInt
+      val (xs, r2) = ints(count - 1)(r)
+      (x :: xs, r2)
+    }
+  }
 
   trait Implicits {
 
