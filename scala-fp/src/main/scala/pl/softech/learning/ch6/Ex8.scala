@@ -11,6 +11,11 @@ object Ex8 {
     g(x)(r)
   }
 
+  def nonNegativeLessThan(n: Int)(rng: RNG): (Int, RNG) = flatMap(Ex1.nonNegativeInt) { x =>
+    val mod = x % n
+    if (x + (n - 1) - mod >= 0) r => (mod, r) else nonNegativeLessThan(n)
+  }(rng)
+
   trait Implicits {
 
     implicit class Ex8Opts[A](r: Rand[A]) {
@@ -36,6 +41,9 @@ object Ex8 {
     } yield x + y
 
     println(sum(rng))
+
+    println(nonNegativeLessThan(400000)(rng))
+    println(nonNegativeLessThan(6)(new SimpleRNG(5)))
   }
 
 }

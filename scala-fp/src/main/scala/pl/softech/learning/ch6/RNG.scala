@@ -23,6 +23,6 @@ object RNG {
 
   object Implicits extends Ex1.Implicits with Ex2.Implicits with Ex3.Implicits with Ex4.Implicits
     with Ex5.Implicits with Ex6.Implicits with Ex8.Implicits
-    with Ex10.Implicits with Ex11.Implicits
+    with Ex11.Implicits
 
 }
