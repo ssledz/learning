@@ -57,4 +57,20 @@ object Ex6 extends App {
   val m = max(xs)
 
   println("max: " + runner(m))
+
+  def words(s: String): Int = s.split(' ').length
+
+  def sumWords(xs: List[String]): Par[Int] = reduce(xs)(0)(words(_))(_ + _)
+
+  val txt = List(
+    "Write a function that takes a list",
+    "of paragraphs (a List[String] )",
+    "and returns\nthe total number of words across",
+    "all paragraphs, in parallel.",
+    "Generalize this\nfunction as much as possible"
+  )
+
+  val words = sumWords(txt)
+
+  println("words: " + runner(words))
 }
