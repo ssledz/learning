@@ -7,7 +7,7 @@
         </layout>
     </appender>
 
-    <logger name="learning.slick" level="debug"/>
+    <logger name="learning.slick" level="trace"/>
 
     <root level="info">
         <appender-ref ref="STDOUT"/>

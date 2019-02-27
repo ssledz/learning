@@ -1,22 +1,32 @@
 package learning.slick.domain
 
 
-import learning.slick.DbComponent
+import learning.slick.{DbComponent, Logging}
 
 import scala.concurrent.Future
 
-trait MessageRepository extends MessageTable {
+trait MessageRepository extends MessageTable with Logging {
   this: DbComponent =>
 
   import driver.api._
 
-  def create(message: Message): Future[Long] = db.run((messages returning messages.map(_.id)) += message)
+  def create(message: Message): Future[Long] = db.run(messagesReturningId += message)
 
   def findAll: Future[List[Message]] = db.run(messages.to[List].result)
 
-  def findById(id: Long): Future[Option[Message]] = db.run(messages.filter(_.id === id).result.headOption)
+  def findById(id: Long): Future[Option[Message]] = {
+    val qa = messages.filter(_.id === id).result
 
-  def update(message : Message) : Future[Int] = db.run(messages.filter(_.id === message.id).update(message))
+    if (logger.isTraceEnabled) {
+      logger.trace("query: " + qa.statements.mkString(""))
+    }
+
+    db.run(qa.headOption)
+  }
+
+  def findBySender(sender: Option[String]): Future[List[Message]] = db.run(messages.filterOpt(sender)(_.sender === _).to[List].result)
+
+  def update(message: Message): Future[Int] = db.run(messages.filter(_.id === message.id).update(message))
 
 }
 
@@ -36,6 +46,8 @@ private[domain] trait MessageTable {
   }
 
   protected val messages = TableQuery[MessageTable]
+
+  protected val messagesReturningId = messages returning messages.map(_.id)
 
 
   def createSchemaIfNotExists: Future[Unit] = db.run(messages.schema.createIfNotExists)

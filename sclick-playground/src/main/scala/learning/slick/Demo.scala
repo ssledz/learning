@@ -31,6 +31,9 @@ object Demo extends App {
 
     MySqlMessageRepository.findAll.get.foreach(println)
 
+    println("findBySender(Some(\"xyz\"))")
+    MySqlMessageRepository.findBySender(Some("xyz")).get.foreach(println)
+
   }
 
   def h2MemDemo(): Unit = {
