@@ -17,10 +17,24 @@ object Demo extends App {
 
     val init = for {
       _ <- MySqlMessageRepository.createSchemaIfNotExists
+      _ <- MySqlMessageRepository.deleteAll
       _ <- MySqlMessageRepository.create(Message("tom", "Hello World"))
+      _ <- MySqlMessageRepository.createMessageIfNotExists(Message("bob", "Hello World !"))
+      _ <- MySqlMessageRepository.createMessageIfNotExists(Message("bob", "Hello World !"))
     } yield ()
 
     init.get
+
+    val inserts = (1 to 5).map { n =>
+      MySqlMessageRepository.create(Message("tom", s"Hello World: $n"))
+    }
+
+    Future.sequence(inserts).get
+
+    val inserts2 = (6 to 8).map(n => Message("tom", s"Hello World: $n"))
+
+    MySqlMessageRepository.create(inserts2)
+
 
     val update = for {
       message <- MySqlMessageRepository.findById(1)

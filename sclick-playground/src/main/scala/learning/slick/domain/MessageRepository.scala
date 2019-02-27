@@ -12,12 +12,21 @@ trait MessageRepository extends MessageTable with QueryLogging {
 
   def create(message: Message): Future[Long] = db.run(messagesReturningId += message)
 
+  def create(messages: Seq[Message]): Future[Seq[Long]] = db.run(messagesReturningId ++= messages)
+
   def createOrUpdate(message: Message)(implicit ec: ExecutionContext): Future[Message] = {
     if (message.id == -1) {
       db.run(traceQa(messagesReturningId into { (message, id) => message.copy(id = id) } += message))
     } else {
       update(message).map(_ => message)
     }
+  }
+
+  def createMessageIfNotExists(message: Message)(implicit ec: ExecutionContext): Future[Message] = {
+    val data = Query((message.sender, message.content))
+    val exists = messages.filter(m => m.sender === message.sender && m.content === message.content).exists
+    val selectExpr = data.filterNot(_ => exists)
+    db.run(traceQa(messages.map(m => m.sender -> m.content).forceInsertQuery(selectExpr))).map(id => message.copy(id = id))
   }
 
   def findAll: Future[List[Message]] = db.run(messages.to[List].result)
@@ -27,6 +36,8 @@ trait MessageRepository extends MessageTable with QueryLogging {
   def findBySender(sender: Option[String]): Future[List[Message]] = db.run(messages.filterOpt(sender)(_.sender === _).to[List].result)
 
   def update(message: Message): Future[Int] = db.run(traceQa(messages.filter(_.id === message.id).update(message)))
+
+  def deleteAll: Future[Int] = db.run(messages.delete)
 
 }
 
