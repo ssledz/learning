@@ -1,4 +1,4 @@
-package learning.slick.mysql
+package learning.slick.comp
 
 import learning.slick.DbComponent
 import slick.jdbc.MySQLProfile
