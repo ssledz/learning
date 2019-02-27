@@ -9,6 +9,17 @@
 
     <logger name="learning.slick" level="trace"/>
 
+    <!-- SQL sent to the database -->
+    <logger name="slick.jdbc.JdbcBackend.statement" level="debug"/>
+    <!-- Parameters passed to a query -->
+    <logger name="slick.jdbc.JdbcBackend.parameter" level="debug"/>
+    <!-- The first few results of each query -->
+    <logger name="slick.jdbc.StatementInvoker.result" level="debug"/>
+    <!-- Session events such as opening/closing connec ons -->
+    <logger name="slick.session" level="debug"/>
+    <!-- Everything! -->
+    <logger name="slick" level="off"/>
+
     <root level="info">
         <appender-ref ref="STDOUT"/>
     </root>

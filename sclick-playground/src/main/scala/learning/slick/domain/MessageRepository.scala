@@ -39,6 +39,8 @@ trait MessageRepository extends MessageTable with QueryLogging {
 
   def deleteAll: Future[Int] = db.run(messages.delete)
 
+  def updateSender(old: String, current: String): Future[Int] = db.run(traceQa(messages.filter(_.sender === old).map(_.sender).update(current)))
+
 }
 
 private[domain] trait MessageTable {
