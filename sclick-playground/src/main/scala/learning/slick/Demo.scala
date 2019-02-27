@@ -49,7 +49,7 @@ object Demo extends App {
     MySqlMessageRepository.findBySender(Some("xyz")).get.foreach(println)
 
     println("tom -> chris")
-    MySqlMessageRepository.updateSender("tom", "chris").get
+    MySqlMessageRepository.updateSender("tom" -> "chris").get
 
     MySqlMessageRepository.findAll.get.foreach(println)
 
