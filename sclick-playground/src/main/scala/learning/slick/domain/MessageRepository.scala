@@ -1,32 +1,32 @@
 package learning.slick.domain
 
 
-import learning.slick.{DbComponent, Logging}
+import learning.slick.{DbComponent, QueryLogging}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
-trait MessageRepository extends MessageTable with Logging {
+trait MessageRepository extends MessageTable with QueryLogging {
   this: DbComponent =>
 
   import driver.api._
 
   def create(message: Message): Future[Long] = db.run(messagesReturningId += message)
 
+  def createOrUpdate(message: Message)(implicit ec: ExecutionContext): Future[Message] = {
+    if (message.id == -1) {
+      db.run(traceQa(messagesReturningId into { (message, id) => message.copy(id = id) } += message))
+    } else {
+      update(message).map(_ => message)
+    }
+  }
+
   def findAll: Future[List[Message]] = db.run(messages.to[List].result)
 
-  def findById(id: Long): Future[Option[Message]] = {
-    val qa = messages.filter(_.id === id).result
-
-    if (logger.isTraceEnabled) {
-      logger.trace("query: " + qa.statements.mkString(""))
-    }
-
-    db.run(qa.headOption)
-  }
+  def findById(id: Long): Future[Option[Message]] = db.run(traceQa(messages.filter(_.id === id).result).headOption)
 
   def findBySender(sender: Option[String]): Future[List[Message]] = db.run(messages.filterOpt(sender)(_.sender === _).to[List].result)
 
-  def update(message: Message): Future[Int] = db.run(messages.filter(_.id === message.id).update(message))
+  def update(message: Message): Future[Int] = db.run(traceQa(messages.filter(_.id === message.id).update(message)))
 
 }
 
@@ -47,7 +47,7 @@ private[domain] trait MessageTable {
 
   protected val messages = TableQuery[MessageTable]
 
-  protected val messagesReturningId = messages returning messages.map(_.id)
+  protected def messagesReturningId = messages returning messages.map(_.id)
 
 
   def createSchemaIfNotExists: Future[Unit] = db.run(messages.schema.createIfNotExists)
@@ -57,4 +57,4 @@ private[domain] trait MessageTable {
 
 final case class Message(sender: String,
                          content: String,
-                         id: Long = 0L)
+                         id: Long = -1L)
