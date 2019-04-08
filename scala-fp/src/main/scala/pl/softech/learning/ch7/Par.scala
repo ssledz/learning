@@ -29,9 +29,6 @@ object Par {
     UnitFuture(f(ar.get, br.get))
   }
 
-  def fork[A](a: => Par[A]): Par[A] = es =>
-    es.submit(new Callable[A] {
-      override def call(): A = a(es).get
-    })
+  def fork[A](a: => Par[A]): Par[A] = es => es.submit(() => a(es).get)
 
 }
