@@ -26,8 +26,6 @@ object Ex6 {
 
     val xs = List("1", "2", "3")
 
-    val zero = 0
-
     def f(x: String, y: Int): Int = x.toInt + y
 
     def g(x: Int, y: String): Int = x - y.toInt

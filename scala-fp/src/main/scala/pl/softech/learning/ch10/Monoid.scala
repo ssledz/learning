@@ -25,4 +25,4 @@ trait MonoidInstances {
 }
 
 object Monoid extends MonoidInstances with Ex1.MonoidInstances with Ex2.MonoidInstances
-  with Ex3.MonoidInstances with Ex5.MonoidOps with Ex6.MonoidOps with Ex7.MonoidOps
+  with Ex3.MonoidInstances with Ex5.MonoidOps with Ex6.MonoidOps with Ex7.MonoidOps with Ex8.MonoidOps
