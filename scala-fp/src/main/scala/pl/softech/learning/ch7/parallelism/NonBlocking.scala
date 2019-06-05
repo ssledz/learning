@@ -9,7 +9,7 @@ object NonBlocking {
     private[parallelism] def apply(k: A => Unit): Unit
   }
 
-  type Par[+A] = ExecutorService => Future[A]
+  type Par[A] = ExecutorService => Future[A]
 
   def unit[A](a: A): Par[A] = es => new Future[A] {
     def apply(cb: A => Unit): Unit = cb(a)
