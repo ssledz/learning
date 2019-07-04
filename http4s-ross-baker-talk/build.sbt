@@ -73,7 +73,7 @@ def scalacOptionsForVersion(version: String): Seq[String] = {
     case Some((2, major)) if major < 13 => Seq(
       "-Xlint:by-name-right-associative",  // By-name parameter of right associative operator.
       "-Xlint:unsound-match",              // Pattern match may not be typesafe.
-      "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
+//      "-Xfatal-warnings",                  // Fail the compilation if there are any warnings.
       "-Yno-adapted-args",                 // Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver.
       "-Ypartial-unification",             // Enable partial unification in type constructor inference
       "-Ywarn-inaccessible",               // Warn about inaccessible types in method signatures.
