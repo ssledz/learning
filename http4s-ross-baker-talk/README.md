@@ -1,0 +1,1 @@
+[http4s: pure, typeful, functional HTTP in Scala – Ross Baker](https://www.youtube.com/watch?v=urdtmx4h5LE)
