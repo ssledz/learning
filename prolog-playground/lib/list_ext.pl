@@ -1,4 +1,4 @@
-module(list_ext, [mk_str/3]).
+:-module(list_ext, [ mk_str/3 ]).
 
 remove_first([], R):- R = [].
 remove_first([_|T], R):- R = T.
