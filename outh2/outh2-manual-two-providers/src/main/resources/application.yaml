@@ -27,7 +27,7 @@ github:
 
 keycloak:
   client:
-    clientId: override me !
+    clientId: outh2-demo
     clientSecret: override me !
     accessTokenUri: http://localhost:9080/auth/realms/dev/protocol/openid-connect/token
     userAuthorizationUri: http://localhost:9080/auth/realms/dev/protocol/openid-connect/auth
