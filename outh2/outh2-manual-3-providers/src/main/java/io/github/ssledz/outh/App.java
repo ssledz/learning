@@ -1,5 +1,6 @@
 package io.github.ssledz.outh;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -7,7 +8,10 @@ import org.springframework.boot.autoconfigure.security.oauth2.resource.ResourceS
 import org.springframework.boot.autoconfigure.security.oauth2.resource.UserInfoTokenServices;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.oauth2.client.OAuth2ClientContext;
@@ -18,6 +22,7 @@ import org.springframework.security.oauth2.client.token.grant.code.Authorization
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.filter.CompositeFilter;
@@ -34,6 +39,9 @@ public class App extends WebSecurityConfigurerAdapter {
 
     @Autowired
     OAuth2ClientContext oauth2ClientContext;
+
+    @Autowired
+    ApplicationEventPublisher eventPublisher;
 
     @RequestMapping("/user")
     public Principal user(Principal principal) {
@@ -72,6 +80,7 @@ public class App extends WebSecurityConfigurerAdapter {
                 client.getResource().getUserInfoUri(), client.getClient().getClientId());
         tokenServices.setRestTemplate(template);
         filter.setTokenServices(tokenServices);
+        filter.setApplicationEventPublisher(eventPublisher);
         return filter;
     }
 
@@ -91,6 +100,21 @@ public class App extends WebSecurityConfigurerAdapter {
     @ConfigurationProperties("keycloak")
     public ClientResources keycloak() {
         return new ClientResources();
+    }
+
+    @Component
+    @Slf4j
+    public static class AuthenticationSuccessListener implements ApplicationListener<AuthenticationSuccessEvent> {
+
+        @Override
+        public void onApplicationEvent(AuthenticationSuccessEvent event) {
+
+            log.info(event.toString());
+            log.info("authentication: " + event.getAuthentication().toString());
+            log.info("authorities: " + event.getAuthentication().getAuthorities().toString());
+            log.info("principal: " + event.getAuthentication().getPrincipal().toString());
+
+        }
     }
 
     class ClientResources {
