@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>io.github.ssledz.outh</groupId>
-    <artifactId>outh2-manual-2-providers</artifactId>
+    <artifactId>outh2-manual-3-providers</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
