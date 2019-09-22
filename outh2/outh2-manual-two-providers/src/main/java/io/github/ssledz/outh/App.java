@@ -13,6 +13,8 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.oauth2.client.OAuth2ClientContext;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.security.oauth2.client.filter.OAuth2ClientAuthenticationProcessingFilter;
+import org.springframework.security.oauth2.client.resource.BaseOAuth2ProtectedResourceDetails;
+import org.springframework.security.oauth2.client.token.grant.client.ClientCredentialsResourceDetails;
 import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeResourceDetails;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
@@ -58,6 +60,7 @@ public class App extends WebSecurityConfigurerAdapter {
         List<Filter> filters = new ArrayList<>();
         filters.add(ssoFilter(facebook(), "/login/facebook"));
         filters.add(ssoFilter(github(), "/login/github"));
+        filters.add(ssoFilter(keycloak(), "/login/keycloak"));
         filter.setFilters(filters);
         return filter;
     }
@@ -85,15 +88,28 @@ public class App extends WebSecurityConfigurerAdapter {
         return new ClientResources();
     }
 
+    @Bean
+    @ConfigurationProperties("keycloak")
+    public ClientResources keycloak() {
+        return new ClientResources(new ClientCredentialsResourceDetails());
+    }
+
     class ClientResources {
 
         @NestedConfigurationProperty
-        private AuthorizationCodeResourceDetails client = new AuthorizationCodeResourceDetails();
+        private BaseOAuth2ProtectedResourceDetails client = new AuthorizationCodeResourceDetails();
 
         @NestedConfigurationProperty
         private ResourceServerProperties resource = new ResourceServerProperties();
 
-        public AuthorizationCodeResourceDetails getClient() {
+        public ClientResources() {
+        }
+
+        public ClientResources(BaseOAuth2ProtectedResourceDetails client) {
+            this.client = client;
+        }
+
+        public BaseOAuth2ProtectedResourceDetails getClient() {
             return client;
         }
 
