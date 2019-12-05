@@ -5,7 +5,7 @@ import cats.implicits._
 import javax.servlet.AsyncContext
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 
-trait ServletIO extends HttpServlet {
+trait ServletIO extends HttpServlet with AsyncServlet {
 
   override def doGet(req: HttpServletRequest, resp: HttpServletResponse): Unit = handle(req)
 
