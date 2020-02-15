@@ -64,6 +64,28 @@ math.type(3.0)   -- float
 0x1A3            -- 419
 ```
 
+#### match library
+
+```
+math.sin(math.pi / 2)          -- 1.0
+math.max(10.4, 7, -3, 20)      -- 20
+math.huge                      -- inf
+random                         -- [0, 1)
+random(6)                      -- [1, 6]
+math.floor(3.3)                -- 3
+math.floor(-3.3)               -- -4
+math.ceil(3.3)                 -- 4
+math.ceil(-3.3)                -- -3
+math.modf(3.3)                 -- 3  ;rounds toward 0
+math.modf(-3.3)                -- -3
+```
+
+setting seed for random
+```lua
+math.randomseed(os.time())
+```
+
+
 ## Lua idioms
 
 It sets `x` to a default value `v` when `x` is not set (provided that `x` is not set to `false`).
