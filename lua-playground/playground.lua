@@ -69,3 +69,30 @@ print("false and 13 = " .. tostring(false and 13))
 print("0 or 5 = " .. tostring(0 or 5))
 print("false or \"hi\" = " .. tostring(false or "hi"))
 print("nil or false = " .. tostring(nil or false))
+
+--[[
+  Type String
+--]]
+
+print("string.gsub(\"one string\", \"one\", \"another\") = " .. string.gsub(a, "one", "another"))
+print("ALO\n123\"" == '\x41LO\10\04923"')
+
+page = [[
+<html>
+<head>
+  <title>An HTML Page</title>
+</head>
+<body>
+  <a href="http://www.lua.org">Lua</a>
+</body>
+</html>
+]]
+print(page)
+
+code = [===[
+a = b[c[i]]
+]===]
+
+print(code)
+
+print("10" + 1)
