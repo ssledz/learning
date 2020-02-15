@@ -110,3 +110,8 @@ print(polyline[1].x)
 
 opnames = {["+"] = "add", ["-"] = "sub", ["*"] = "mul", ["/"] = "div"}
 print(opnames["-"])
+
+t = {10, print, x = 12, k = "hi"}
+for k, v in pairs(t) do
+    print(k, v)
+end

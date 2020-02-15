@@ -305,6 +305,19 @@ a = {[i+0] = s, [i+1] = s..s, [i+2] = s..s..s}
 print(a[22])                                      --> ---
 ```
 
+### table traversal
+
+```lua
+t = {10, print, x = 12, k = "hi"}
+for k, v in pairs(t) do
+  print(k, v)
+end
+    --> 1 10
+    --> 2 function: 0x55ec1a64cf60
+    --> k hi
+    --> x 12
+```
+
 ## Operator precedence
 
 ```
@@ -342,4 +355,11 @@ x = a and b or c
 For example to select maximum of two numbers x and y
 ```lua
 z = (x > y) and x or y
+```
+
+---
+
+Appends 'v' to the end of the sequence (array without gaps)
+```lua
+a[#a + 1] = v 
 ```
