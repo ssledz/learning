@@ -96,3 +96,17 @@ a = b[c[i]]
 print(code)
 
 print("10" + 1)
+local utf8 = require('utf8')
+print(utf8.len("résumé"))
+print(utf8.char(114, 233, 115, 117, 109, 233))
+
+polyline = {
+    color = "blue", thickness = 2, npoints = 4,
+    { x = 0, y = 0 }, { x = -10, y = 0 }, { x = -10, y = 1 }, { x = 0, y = 1 }
+}
+
+print(polyline.color)
+print(polyline[1].x)
+
+opnames = {["+"] = "add", ["-"] = "sub", ["*"] = "mul", ["/"] = "div"}
+print(opnames["-"])

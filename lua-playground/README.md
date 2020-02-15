@@ -1,4 +1,23 @@
-## Calling lua from shell 
+## Installing module
+
+Installing locally utf8
+```bash
+luarocks install --local utf8
+```
+This could be available from `~/.luarocks/lib/lua/5.1`
+
+To setup lua env variables in order to `utf8` package be visible by `require` function do
+```bash
+eval $(luarocks path --bin) 
+```
+then now `utf8` package should be visible in lua scripts
+```lua
+local utf8 = require('utf8')
+print(utf8.len("résumé"))                        --> 6
+print(utf8.char(114, 233, 115, 117, 109, 233))   --> résumé
+```
+
+## Calling lua from shell
 ```bash
 lua -e 'print("Hello world")'
 ```
@@ -192,7 +211,8 @@ tonumber("987", 8)      --> nil
 #### string functions
 
 ```lua
-string.gsub("one string", "one", "another")  --> another string   ;replace one string with another
+string.gsub("one string", "one", "another")  --> another string   ;global substitution, replaces all occurrences of 
+                                             -->                   a pattern in a string with another string
 string.rep("abc", 3)                         --> abcabcabc        ;replicates string
 string.reverse("A Long Line!")               --> !eniL gnoL A
 string.lower("A Long Line!")                 --> a long line!
@@ -210,6 +230,79 @@ string.format("x = %d y = %d", 10, 20)       --> x = 10 y = 20
 string.format("x = %f", 200)                 --> x = 200.000000
 string.format("pi = %.4f", math.pi)          --> pi = 3.1416
 string.format("%02d/%02d/%04d", d, m, y)     --> 05/11/1990
+string.find("hello world", "wor")            --> 7 9              ;searches for a pattern in a given string
+string.find("hello world", "war")            --> nil
+```
+
+#### unicode
+
+The functions `reverse`, `upper`, `lower`, `byte`, and `char` do not work for `UTF-8` strings
+
+```lua
+utf8.len("résumé")                                  --> 6
+utf8.char(114, 233, 115, 117, 109, 233)             --> résumé
+utf8.codepoint("résumé", 6, 7)                      --> 109 233  ;considers both i and j to be byte positions in string s
+utf8.codepoint("résumé", utf8.offset("résumé", 6))  --> 109 
+```
+
+## Table type
+
+Lua uses tables to represent packages and objects as well. When we write `math.sin`, we think
+about “the function `sin` from the `math` lib". For Lua, this expression means “index the table `math`
+using the string "`sin`" as the key”.
+
+A table in Lua is essentially an associative array. Tables in Lua are neither values nor variables; they are objects.
+
+```
+a = {}               -- create a table and assign its reference
+a["x"] = 10          -- new entry, with key="x" and value=10
+a[20] = "great"      -- new entry, with key=20 and value="great"
+a["x"]               --> 10
+a["x"] = a["x"] + 1  -->  increments entry "x"
+a["x"]               --> 11
+a = nil              -- no references left to the table the garbage collector will eventually 
+                     -- delete the table and reuse its memory.
+```
+
+### table indices
+
+```
+a = {}                                -- empty table
+for i = 1, 1000 do a[i] = i*2 end     -- create 1000 new entries
+a[9]                                  --> 18
+a["x"] = 10
+a["x"]                                --> 10
+a["y"]                                --> nil
+a.x = 10                              -- same as a["x"] = 10
+a.x                                   --> 10  ;same as a["x"]
+a.y                                   --> nil ;same as a["y"]
+```
+
+### table constructors
+
+```lua
+days = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}
+print(days[4])                     --> Wednesday
+a = {x = 10, y = 20}               -- equivalent to a = {}; a.x = 10; a.y = 20
+polyline = {                       -- mixing list style and record style construction
+    color = "blue", thickness = 2, npoints = 4,
+    { x = 0, y = 0 },              -- polyline[1]
+    { x = -10, y = 0 },            -- polyline[2]
+    { x = -10, y = 1 },            -- polyline[3]
+    { x = 0, y = 1 }               -- polyline[4]
+}
+print(polyline.color)              --> blue
+print(polyline[2].x)               --> -10
+```
+For negative indices and string indices that are not proper identifiers there is another general
+construction form where each index is an expression, between square brackets
+
+```lua
+opnames = {["+"] = "add", ["-"] = "sub", ["*"] = "mul", ["/"] = "div"}
+print(opnames["-"])                               --> sub
+i = 20; s = "-"
+a = {[i+0] = s, [i+1] = s..s, [i+2] = s..s..s}
+print(a[22])                                      --> ---
 ```
 
 ## Operator precedence
