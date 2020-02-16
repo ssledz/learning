@@ -318,6 +318,58 @@ end
     --> x 12
 ```
 
+in order to ensure order do
+
+```lua
+for k, v in pairs(t) do
+  print(k, v)
+end
+```
+
+another way
+
+```lua
+for k = 1, #t do
+  print(k, t[k])
+end
+```
+
+### table functions
+
+```lua
+table.insert(t, "a line")
+table.insert(t, "second line")
+print(t[1])                          --> a line
+print(t[2])                          --> second line
+print(table.remove(t, 1))            --> a line
+print(t[1])                          --> second line
+table.insert(t, 1, "third line")     -- add at the beginning
+print(t[1])                          --> third line
+print(t[2])                          --> second line
+table.remove(t)                      -- removes from the end ;pop equivalent
+print(t[1])                          --> third line
+table.insert(t, "fourth element")    -- add at the end ;push equivalent
+print(t[1])                          --> third element
+print(t[2])                          --> fourth element
+table.move(t, 1, #a, 2)              -- moves element from i to j (both inclusive) to position k ;this duplicates first element
+print(t[1])                          --> third element
+print(t[2])                          --> third element
+print(t[3])                          --> fourth element
+```
+
+## Safe navigation
+
+```lua
+zip = company and company.director and company.director.address and company.director.address.zipcode
+```
+
+this can be replaced with following
+
+```
+E = {}
+zip = (((company or E).director or E).address or E).zipcode
+```
+
 ## Operator precedence
 
 ```
@@ -362,4 +414,22 @@ z = (x > y) and x or y
 Appends 'v' to the end of the sequence (array without gaps)
 ```lua
 a[#a + 1] = v 
+```
+
+---
+
+Inserts first element to a table. In return we get `{"a", "b", "c"}`
+```lua
+t={"b", "c"} 
+table.move(t, 1, #t, 2)
+t[1] = "a" 
+```
+
+---
+
+Remove first element of a table. In return we get `{"b", "c", nil}`
+```lua
+t={"a", "b", "c"} 
+table.move(t, 2, #t, 1)
+t[#t] = nil 
 ```

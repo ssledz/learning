@@ -115,3 +115,25 @@ t = {10, print, x = 12, k = "hi"}
 for k, v in pairs(t) do
     print(k, v)
 end
+
+t = {}
+table.insert(t, "a line")
+table.insert(t, "second line")
+print(t[1])
+print(t[2])
+
+print(table.remove(t, 1))
+print(t[1])
+table.insert(t, 1, "third line")
+print(t[1])
+print(t[2])
+table.remove(t)
+print(t[1])
+table.insert(t, "fourth element")    -- add at the end ;push equivalent
+print(t[1])
+print(t[2])
+print("moving")
+-- table.move(t, 1, #t, 2)          -- available in lua5.3; semantic is to duplicate first eleemnt in a list
+-- print(t[1])
+-- print(t[2])
+-- print(t[3])
