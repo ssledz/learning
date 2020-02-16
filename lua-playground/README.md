@@ -357,6 +357,47 @@ print(t[2])                          --> third element
 print(t[3])                          --> fourth element
 ```
 
+## Function type
+
+if the function has one single argument and that argument is either a literal string or a 
+table constructor, then the parentheses are optional
+
+```lua
+print "Hello World"             -- print("Hello World")
+dofile 'a.lua'                  -- dofile ('a.lua')
+print [[a multi-line            
+message]]
+f{x=10, y=20}                  -- f({x=10, y=20})
+type{}                         -- type({})
+```
+
+Example of function definition
+
+```lua
+function add (a)
+  local sum = 0
+  for i = 1, #a do
+    sum = sum + a[i]
+  end
+  return sum
+end
+```
+
+We can call a function with a number of arguments different from its number of parameters. Lua adjusts
+the number of arguments to the number of parameters by throwing away extra arguments and supplying
+nils to extra parameters.
+
+```lua
+function f (a, b) print(a, b) end
+```
+
+```lua
+f()                 --> nil nil
+f(1)                --> 1 nil
+f(1, 2)             --> 1 2
+f(1, 2, 3)          --> 1 2            (3 is discarded)
+```
+
 ## Safe navigation
 
 ```lua
@@ -432,4 +473,14 @@ Remove first element of a table. In return we get `{"b", "c", nil}`
 t={"a", "b", "c"} 
 table.move(t, 2, #t, 1)
 t[#t] = nil 
+```
+
+---
+
+Default arguments. If n is not defined that is equal to 1
+```lua
+function incCount (n)
+  n = n or 1
+  globalCounter = globalCounter + n
+end
 ```
