@@ -48,11 +48,11 @@ object Dependencies {
 
   val enumeratumCirce = "com.beachape" %% "enumeratum-circe" % "1.5.22"
 
-  val catsCore = "org.typelevel" %% "cats-core" % catsVersion withSources() withJavadoc()
+  val catsCore = "org.typelevel" %% "cats-core" % catsVersion
 
-  val catsEffect = "org.typelevel" %% "cats-effect" % catsEffectVersion withSources() withJavadoc()
+  val catsEffect = "org.typelevel" %% "cats-effect" % catsEffectVersion
 
-  val catsFree = "org.typelevel" %% "cats-free" % catsFreeVersion withSources() withJavadoc()
+  val catsFree = "org.typelevel" %% "cats-free" % catsFreeVersion
 
   val cats = Seq(catsCore, catsEffect, catsFree)
 
