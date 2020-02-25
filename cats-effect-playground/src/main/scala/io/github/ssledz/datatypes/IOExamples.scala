@@ -9,6 +9,7 @@ import cats.implicits._
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+
 object IOExamples extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] =
@@ -34,6 +35,7 @@ object CancelableProcesses {
     } else putStrLn(s"$label: $n") >> notCancelableSlowIteration(n - 1, label)
   }
 
+  // cancelable
   def slowIteration2(n: Int, label: String, duration: FiniteDuration = 500.millis)(implicit ec: ExecutionContext): IO[Unit] = {
     val go = new AtomicBoolean(true)
     def inpureIter(n: Int): Unit = {
