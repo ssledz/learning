@@ -1,31 +1,85 @@
 package io.github.ssledz.datatypes
 
+import java.util.concurrent.{Executors, ScheduledExecutorService}
+
 import cats.effect.{ContextShift, ExitCode, IO, IOApp}
 import cats.implicits._
 
+import scala.concurrent.Future
+import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 object IOExamples extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] =
 //    StackSafety.app.as(ExitCode.Success)
-    DescribingEffects.app.as(ExitCode.Success)
+//    SyncEffects.app.as(ExitCode.Success)
+    AsyncEffects.app.as(ExitCode.Success)
 
 }
 
-object DescribingEffects {
+object AsyncEffects {
 
-  val helloWorld = IO(println("Hello World"))
+  import concurrent.ExecutionContext.Implicits.global
 
-  val thisIsWrong = IO.pure(println("THIS IS WRONG!"))
+  implicit val se = Executors.newScheduledThreadPool(2)
 
-  def app(implicit cs: ContextShift[IO]) =
+  val future1 = convert(Future(println("future 1")))
+  val future2 = convert(Future(println("future 2")))
+
+  def app(implicit cs: ContextShift[IO]): IO[Unit] = {
+    val future3 = IO.fromFuture(IO(Future(println("future 3"))))
+    val future4 = IO.fromFuture(IO.pure(Future(println("future 4")))) // eager evaluation
+    for {
+      fiber <- (sleep(1000.millis) *> future1).start
+      _ <- future1
+      _ <- future2
+      _ <- future3
+      _ <- future4
+      _ <- fiber.join
+      _ <- IO(se.shutdown()).void
+    } yield ()
+  }
+
+  def convert[A](fa: => Future[A]): IO[A] =
+    IO.async { cb =>
+      // This triggers evaluation of the by-name param and of onComplete,
+      // so it's OK to have side effects in this callback
+      fa.onComplete {
+        case Success(a) => cb(Right(a))
+        case Failure(e) => cb(Left(e))
+      }
+    }
+  def sleep(d: FiniteDuration)(implicit sc: ScheduledExecutorService): IO[Unit] =
+    IO.cancelable { cb =>
+      val r = new Runnable { def run() = cb(Right(())) }
+      val f = sc.schedule(r, d.length, d.unit)
+
+      // Returning the cancellation token needed to cancel
+      // the scheduling and release resources early
+      IO(f.cancel(false)).void
+    }
+
+}
+
+object SyncEffects {
+
+  def putStrLn(value: String): IO[Unit] = IO(println(value))
+
+  def app(implicit cs: ContextShift[IO]): IO[Unit] = {
+
+    val helloWorld = IO(println("Hello World"))
+
+    val thisIsWrong = IO.pure(println("THIS IS WRONG!"))
+
     for {
       _ <- helloWorld
       _ <- thisIsWrong
-      _ <- IO.pure(25).flatMap(n => IO(println(s"Number is: $n")))
-      neverTask <- (IO.never *> IO(println("This will be never called !"))).start
+      _ <- IO.pure(25).flatMap(n => putStrLn(s"Number is: $n"))
+      neverTask <- (IO.never *> putStrLn("This will be never called !")).start
       _ <- IO.unit
-      _ <- IO.race(IO(Thread.sleep(1000)) *> IO(println("Time out !!!")), neverTask.join)
+      _ <- IO.race(IO(Thread.sleep(1000)) *> putStrLn("Time out !!!"), neverTask.join)
     } yield ()
+  }
 
 }
 
