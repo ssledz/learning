@@ -1,11 +1,17 @@
 package io.github.ssledz
 
-import com.google.inject.servlet.{GuiceServletContextListener, ServletModule}
-import com.google.inject.{Guice, Injector, Scopes}
+import com.google.inject.servlet.GuiceServletContextListener
+import com.google.inject.{AbstractModule, Guice, Injector, Scopes}
 import net.codingwell.scalaguice.ScalaModule
 import org.eclipse.jetty.util.thread.QueuedThreadPool
 
 object Main extends App {
+
+  val mainInjector = Guice.createInjector(new ApplicationModule)
+
+  class AppServletContextListener extends GuiceServletContextListener {
+    def getInjector: Injector = mainInjector.createChildInjector(new ServletRegistration(mainInjector))
+  }
 
   val server = EmbeddedServer(
     port = 8090,
@@ -17,19 +23,15 @@ object Main extends App {
 
 }
 
-class AppServletContextListener extends GuiceServletContextListener {
-  def getInjector: Injector = Guice.createInjector(new ApplicationModule)
+class ApplicationModule extends AbstractModule with ScalaModule {
+  override def configure(): Unit = {
+    bind[SyncHomeServlet].in(Scopes.SINGLETON)
+  }
 }
 
-class ApplicationModule extends ServletModule with AsyncServletModule with ScalaModule with ScalaServletModule {
-
+class ServletRegistration(override val i: Injector) extends ScalaServletModule {
   override def configureServlets(): Unit = {
-    bind[SyncHomeServlet].in(Scopes.SINGLETON)
     serve("/sync-home").using[SyncHomeServlet]
-
-    asyncServlet(binder, getServletContext)
-      .serve("/async-home").using[AsyncHomeServlet].build()
-
+    serveAsync("/async-home").using[AsyncHomeServlet]
   }
-
 }
