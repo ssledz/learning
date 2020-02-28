@@ -23,6 +23,7 @@ lazy val commonSettings = Seq(
 val badConsoleFlags = Seq("-Xfatal-warnings", "-Ywarn-unused:imports")
 
 val consoleSettings = Seq(
+  cancelable in Global := true,
   initialCommands := s"import io.github.ssledz._",
   scalacOptions in (Compile, console) ~= (_.filterNot(badConsoleFlags.contains(_)))
 )
