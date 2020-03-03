@@ -90,7 +90,7 @@ lazy val typeSystemEnhancements = addCompilerPlugin(("org.typelevel" %% "kind-pr
 import Dependencies._
 
 lazy val dependencies = {
-  val deps = libraryDependencies ++= Seq(kafka, enumeratum, pureConfig, logging, logback) ++ cats
+  val deps = libraryDependencies ++= Seq(kafka, enumeratum, pureConfig, logging, logback) ++ cats ++ dropwizardMetrics
 
   def extraResolvers =
     resolvers ++= Seq(

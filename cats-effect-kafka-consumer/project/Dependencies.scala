@@ -20,6 +20,12 @@ object Dependencies {
 
   val kafka = "org.apache.kafka" % "kafka-clients" % "2.2.1"
 
+  val dropwizardMetrics = Seq(
+    "metrics-graphite",
+    "metrics-core",
+    "metrics-jvm"
+  ).map("io.dropwizard.metrics" % _ % "4.0.5")
+
   val scalaCheck = "org.scalacheck" %% "scalacheck" % "1.14.2" % Test
 
   val scalaTest = "org.scalatest" %% "scalatest" % "3.0.8" % Test
