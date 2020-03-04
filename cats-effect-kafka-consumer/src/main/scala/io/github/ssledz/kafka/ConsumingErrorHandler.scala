@@ -1,62 +1,49 @@
 package io.github.ssledz.kafka
 
-import cats.effect.{ContextShift, IO}
+import cats.effect.{ContextShift, Sync}
+import cats.{Monad, Parallel}
 import io.github.ssledz.kafka.KafkaConsumerProcessor._
 import org.slf4j.LoggerFactory
 
-trait ConsumingErrorHandler {
-
-  def handleErrors(errors: List[ConsumingError]): IO[Unit]
-
+trait ConsumingErrorHandler[F[_]] {
+  def handleErrors(errors: List[ConsumingError]): F[Unit]
 }
 
-object ConsumingErrorHandler {}
-
-trait ErrorProcessor {
-
-  def processError(error: ConsumingError): IO[Option[ConsumingError]]
-
+trait ErrorProcessor[F[_]] {
+  def processError(error: ConsumingError): F[Option[ConsumingError]]
 }
 
-class ProcessorConsumingErrorHandler(processors: List[ErrorProcessor])(implicit cs: ContextShift[IO]) extends ConsumingErrorHandler {
+import cats.implicits._
 
-  private val processor = processors.reduce(compose)
+class CompoundErrorHandler[F[_]: Monad: Sync: ContextShift: Parallel](processors: List[ErrorProcessor[F]]) extends ConsumingErrorHandler[F] {
 
-  private val logOnlyHandler = new LogOnlyErrorHandler
+  private val processor: ErrorProcessor[F] = processors.reduce(compose)
 
-  private def compose(p1: ErrorProcessor, p2: ErrorProcessor): ErrorProcessor = new ErrorProcessor {
-    override def processError(error: ConsumingError): IO[Option[ConsumingError]] =
+  private val logOnlyHandler = new LogOnlyErrorHandler[F]
+
+  private def compose(p1: ErrorProcessor[F], p2: ErrorProcessor[F]): ErrorProcessor[F] = new ErrorProcessor[F] {
+    override def processError(error: ConsumingError): F[Option[ConsumingError]] =
       p1.processError(error).flatMap {
         case Some(err) => p2.processError(err)
-        case None => IO.pure(None)
+        case None => Monad[F].pure(None)
       }
 
   }
 
-  def handleErrors(errors: List[ConsumingError]): IO[Unit] = {
-
-    import cats.implicits._
-
-    val x = errors.map(processor.processError)
-
+  def handleErrors(errors: List[ConsumingError]): F[Unit] =
     for {
-      errors <- x.parSequence.map(_.flatten)
+      errors <- errors.map(processor.processError).parSequence.map(_.flatten)
       _ <- logOnlyHandler.handleErrors(errors)
     } yield ()
 
-  }
-
 }
 
-class LogOnlyErrorHandler extends ConsumingErrorHandler {
+class LogOnlyErrorHandler[F[_]: Sync] extends ConsumingErrorHandler[F] {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
-  def handleErrors(errors: List[ConsumingError]): IO[Unit] = IO {
-    errors.foreach {
-      case UnknownError(record, exception) =>
-        logger.error(s"Unknown error during processing record : $record", exception)
-    }
+  def handleErrors(errors: List[ConsumingError]): F[Unit] = Sync[F].delay {
+    errors.foreach(err => logger.error(s"Unknown error during processing record : ${err.record}", err.exception))
   }
 
 }

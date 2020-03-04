@@ -3,20 +3,21 @@ package io.github.ssledz.kafka
 import java.net.InetSocketAddress
 import java.util.concurrent.TimeUnit
 
-import cats.effect.{IO, Resource}
+import cats.effect.{IO, Resource, Sync}
 import cats.implicits._
 import com.codahale.metrics.graphite.{Graphite, GraphiteReporter}
 import com.codahale.metrics.jvm.{GarbageCollectorMetricSet, MemoryUsageGaugeSet}
 import com.codahale.metrics.{MetricFilter, MetricRegistry, ScheduledReporter, Slf4jReporter}
+import com.typesafe.scalalogging.LazyLogging
 import io.github.ssledz.kafka.Config.MetricsConfig
 import io.github.ssledz.kafka.Config.MetricsConfig.GraphiteConfig
 import org.slf4j.LoggerFactory
 
-trait MetricsService {
+trait MetricsService[F[_]] {
 
   def measureAndLog[A](timerName: String)(op: => A): A
 
-  def measureAndLogF[A](timerName: String)(fa: IO[A]): IO[A]
+  def measureAndLogF[A](timerName: String)(fa: F[A]): F[A]
 
   def meter(name: String, n: Long = 1): Unit
 
@@ -24,21 +25,19 @@ trait MetricsService {
 
 }
 
-object MetricsService {
+object MetricsService extends LazyLogging {
 
-  private lazy val logger = LoggerFactory.getLogger(classOf[MetricsService])
-
-  val Nop: MetricsService = new MetricsService {
+  def Nop[F[_]]: MetricsService[F] = new MetricsService[F] {
     def measureAndLog[A](timerName: String)(op: => A): A = op
 
     def meter(name: String, n: Long): Unit = ()
 
-    def measureAndLogF[A](timerName: String)(fa: IO[A]): IO[A] = fa
+    def measureAndLogF[A](timerName: String)(fa: F[A]): F[A] = fa
 
     def close(): Unit = ()
   }
 
-  val NopIO: Resource[IO, MetricsService] = Resource.make(IO(Nop))(_ => IO.unit)
+  def NopF[F[_] : Sync]: Resource[F, MetricsService] = Resource.make(Sync[F].de(Nop))(_ => IO.unit)
 
   def resource(cfg: MetricsConfig): Resource[IO, MetricsService] = {
 

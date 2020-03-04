@@ -3,14 +3,16 @@ package io.github.ssledz.kafka
 import java.time.Duration
 import java.util.Properties
 
-import cats.effect.{ContextShift, IO}
+import cats.Parallel
+import cats.effect.{ContextShift, Resource, Sync}
 import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 import io.github.ssledz.kafka.Config.KafkaConsumerConfig
-import io.github.ssledz.kafka.KafkaConsumerProcessor._
+import io.github.ssledz.kafka.KafkaConsumerProcessor.ConsumingError
+import io.github.ssledz.kafka.ThreadResources.KafkaBlocker
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.consumer.ConsumerConfig._
-import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.consumer.{Consumer, KafkaConsumer}
 import org.apache.kafka.common.config.SaslConfigs
 import org.apache.kafka.common.security.auth.SecurityProtocol
 
@@ -18,37 +20,32 @@ import scala.jdk.CollectionConverters._
 
 trait KafkaConsumerProcessor extends LazyLogging {
 
-  def pollLoop(cfg: KafkaConsumerConfig, consumer: KafkaConsumer[String, String], kcs: ContextShift[IO])(
-      f: String => IO[Either[ConsumingError, Unit]])(implicit C: ContextShift[IO], E: ConsumingErrorHandler): IO[Unit] = {
+  def pollLoop[F[_]: Sync: ContextShift: Parallel](cfg: KafkaConsumerConfig, consumer: Consumer[String, String])(
+      f: String => F[Unit])(implicit blocker: KafkaBlocker, E: ConsumingErrorHandler[F]): F[Unit] =
+    for {
 
-    val repeat: IO[Unit] = for {
-
-      records <- IO {
-        val records = consumer.poll(Duration.ofMillis(cfg.poll.interval)).asScala.toList
-        logger.trace("poll.all ({})", records.size)
-        records
-      }
+      records <- blocker.underlying.blockOn(Sync[F].delay(consumer.poll(Duration.ofMillis(cfg.poll.interval)).asScala.toList))
 
       result <- records.parTraverse { record =>
-        f(record.value).handleErrorWith { error =>
-          IO.pure(Left(UnknownError(record.value, error)))
+        f(record.value).attempt.map {
+          case Left(err) => Left(ConsumingError(record.value, err))
+          case _ => Right(())
         }
       }
 
       (errors, _) = result.partition(_.isLeft)
       _ <- E.handleErrors(errors.flatMap(_.swap.toSeq))
-      _ <- kcs.shift
 
     } yield ()
-
-    kcs.shift *> repeat.foreverM
-  }
 
 }
 
 object KafkaConsumerProcessor {
 
-  def createConsumer(cfg: KafkaConsumerConfig): KafkaConsumer[String, String] = {
+  def kafka[F[_]: Sync: ContextShift](cfg: KafkaConsumerConfig)(implicit blocker: KafkaBlocker): Resource[F, KafkaConsumer[String, String]] =
+    Resource.make(Sync[F].delay(createConsumer(cfg)))(c => blocker.underlying.blockOn(Sync[F].delay(c.close()))(ContextShift[F]))
+
+  private def createConsumer(cfg: KafkaConsumerConfig): KafkaConsumer[String, String] = {
     val c = new KafkaConsumer[String, String](props(cfg))
     c.subscribe(List(cfg.topic).asJava)
     c
@@ -73,8 +70,6 @@ object KafkaConsumerProcessor {
     ps
   }
 
-  sealed trait ConsumingError
-
-  case class UnknownError(record: String, exception: Throwable) extends ConsumingError
+  case class ConsumingError(record: String, exception: Throwable)
 
 }

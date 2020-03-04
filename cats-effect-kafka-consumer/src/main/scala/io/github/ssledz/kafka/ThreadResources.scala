@@ -10,8 +10,9 @@ import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 object ThreadResources {
 
-  def kafka: Resource[IO, (ExecutorService, ExecutionContextExecutor, ContextShift[IO])] =
+  def kafka: Resource[IO, KafkaBlocker] =
     make(newSingleThreadExecutor(newThreadFactory("kafka-pool")))
+      .map { case (_, ec, _) => KafkaBlocker(Blocker.liftExecutionContext(ec)) }
 
   def blocking: Resource[IO, (ExecutorService, Blocker, ContextShift[IO])] =
     make(newCachedThreadPool(newThreadFactory("blocking-pool")))
@@ -37,5 +38,7 @@ object ThreadResources {
       back
     }
   }
+
+  case class KafkaBlocker(underlying: Blocker)
 
 }
