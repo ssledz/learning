@@ -5,10 +5,11 @@ import java.net.InetAddress
 import cats.Show
 import io.github.ssledz.kafka.Config.MetricsConfig.GraphiteConfig
 import io.github.ssledz.kafka.Config.{KafkaConsumerConfig, MetricsConfig}
+import org.apache.kafka.clients.consumer.ConsumerConfig
 import pureconfig.ConfigReader.Result
 import pureconfig.{ConfigReader, ConfigSource}
 
-case class Config(consumer: KafkaConsumerConfig, metrics: Option[MetricsConfig])
+case class Config(consumer: KafkaConsumerConfig, metrics: Option[MetricsConfig] = None)
 
 object Config {
 
@@ -45,11 +46,11 @@ object Config {
       groupId: String,
       topic: String,
       poll: KafkaPollConfig,
-      maxPartitionFetchBytes: Int,
-      fetchMaxBytes: Int,
-      jaasCredentials: Option[String])
+      maxPartitionFetchBytes: Int = ConsumerConfig.DEFAULT_MAX_PARTITION_FETCH_BYTES,
+      fetchMaxBytes: Int = ConsumerConfig.DEFAULT_FETCH_MAX_BYTES,
+      jaasCredentials: Option[String] = None)
 
-  case class KafkaPollConfig(interval: Long, maxInterval: Int, maxRecords: Option[Int]) {
+  case class KafkaPollConfig(interval: Long, maxInterval: Int = 3000, maxRecords: Option[Int] = None) {
     assert(interval < maxInterval)
   }
 

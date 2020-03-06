@@ -32,5 +32,6 @@ object Dependencies {
 
   val mockitoScala = "org.mockito" %% "mockito-scala" % "1.7.1" % Test
 
-  val tests = Seq(scalaTest, scalaCheck, mockitoScala)
+  val dockerTestKit = Seq("com.whisk" %% "docker-testkit-scalatest", "com.whisk" %% "docker-testkit-impl-docker-java").map(_ % "0.9.9" % Test)
+
 }

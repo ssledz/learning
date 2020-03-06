@@ -107,7 +107,8 @@ lazy val tests = {
   val deps = libraryDependencies ++= Seq(
     scalaTest,
     scalaCheck
-  )
+  ) ++ dockerTestKit
+
 
   val frameworks = testFrameworks := Seq(TestFrameworks.ScalaTest)
 
