@@ -28,7 +28,7 @@ class KafkaConsumerIntegrationTest extends FlatSpec with Futures with KafkaDocke
     val consumer = ThreadResources.kafka.use { implicit kafkaBlocker =>
       KafkaConsumerProcessor.kafka(cfg.consumer).use { consumer =>
         pollLoop(cfg.consumer, consumer) { record =>
-          IO(println(record))
+          IO(println(s"[${Thread.currentThread().getName}] record: $record"))
         }.foreverM *> IO.unit
       }
     }
