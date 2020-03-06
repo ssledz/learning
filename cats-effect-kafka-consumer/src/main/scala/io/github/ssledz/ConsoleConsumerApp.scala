@@ -19,10 +19,10 @@ object ConsoleConsumerApp extends IOApp with KafkaConsumerProcessor {
 
   def run(cfg: Config)(implicit errorHandler: ConsumingErrorHandler[IO]): IO[ExitCode] =
     ThreadResources.kafka.use { implicit kafkaBlocker =>
-      KafkaConsumerProcessor.kafka(cfg.consumer).use { consumer =>
+      KafkaConsumerProcessor.kafka[IO](cfg.consumer).use { consumer =>
         pollLoop(cfg.consumer, consumer) { record =>
           IO(println(record))
         }
       }
-    }
+    }.as(ExitCode.Success)
 }

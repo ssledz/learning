@@ -3,7 +3,7 @@ package io.github.ssledz.kafka
 import java.net.InetSocketAddress
 import java.util.concurrent.TimeUnit
 
-import cats.effect.{IO, Resource, Sync}
+import cats.effect.{Resource, Sync}
 import cats.implicits._
 import com.codahale.metrics.graphite.{Graphite, GraphiteReporter}
 import com.codahale.metrics.jvm.{GarbageCollectorMetricSet, MemoryUsageGaugeSet}
@@ -37,37 +37,38 @@ object MetricsService extends LazyLogging {
     def close(): Unit = ()
   }
 
-  def NopF[F[_] : Sync]: Resource[F, MetricsService] = Resource.make(Sync[F].de(Nop))(_ => IO.unit)
+  def NopF[F[_]: Sync]: Resource[F, MetricsService[F]] = Resource.make(Sync[F].delay(Nop[F]))(_ => Sync[F].unit)
 
-  def resource(cfg: MetricsConfig): Resource[IO, MetricsService] = {
+  def resource[F[_]: Sync](cfg: MetricsConfig): Resource[F, MetricsService[F]] = {
 
     val registry: MetricRegistry = new MetricRegistry
 
-    val slf4j = IO(slf4jReporter(registry, cfg))
+    val slf4j: F[ScheduledReporter] = Sync[F].delay(slf4jReporter(registry, cfg))
 
-    val start: ScheduledReporter => IO[ScheduledReporter] = r =>
-      IO {
+    val start: ScheduledReporter => F[ScheduledReporter] = r =>
+      Sync[F].delay {
         r.start(cfg.schedule.toLong, TimeUnit.SECONDS)
         r
     }
 
     val reporter = cfg.graphite match {
       case Some(c) =>
-        IO(graphiteReporter(registry, c))
+        Sync[F]
+          .delay(graphiteReporter(registry, c))
           .handleErrorWith { ex =>
-            IO(logger.error("Error during initialization of metrics service, fallback to slf4j reporter", ex)) >> slf4j
+            Sync[F].delay(logger.error("Error during initialization of metrics service, fallback to slf4j reporter", ex)) *> slf4j
           }
-      case None => IO(logger.info("Using slf4j metrics reporter")) >> slf4j
+      case None => Sync[F].delay(logger.info("Using slf4j metrics reporter")) >> slf4j
     }
 
     registry.register("jvm.gc", new GarbageCollectorMetricSet)
     registry.register("jvm.mem", new MemoryUsageGaugeSet)
 
-    Resource.make[IO, MetricsService](reporter >>= start >>= (r => IO(new DefaultMetricsService(registry, r))))(r => IO(r.close()))
+    Resource.make[F, MetricsService[F]](reporter >>= start >>= (r => Sync[F].delay(new DefaultMetricsService(registry, r))))(r => Sync[F].delay(r.close()))
 
   }
 
-  private def graphiteReporter(registry: MetricRegistry, cfg: GraphiteConfig): GraphiteReporter = {
+  private def graphiteReporter(registry: MetricRegistry, cfg: GraphiteConfig): ScheduledReporter = {
     val graphite = new Graphite(new InetSocketAddress(cfg.host, cfg.port))
     GraphiteReporter
       .forRegistry(registry)
@@ -86,7 +87,7 @@ object MetricsService extends LazyLogging {
       .convertDurationsTo(TimeUnit.MILLISECONDS)
       .build
 
-  private class DefaultMetricsService(registry: MetricRegistry, reporter: ScheduledReporter) extends MetricsService {
+  private class DefaultMetricsService[F[_]: Sync](registry: MetricRegistry, reporter: ScheduledReporter) extends MetricsService[F] {
 
     def measureAndLog[A](timerName: String)(op: => A): A = registry.timer(timerName).time(() => op)
 
@@ -94,11 +95,11 @@ object MetricsService extends LazyLogging {
 
     def close(): Unit = reporter.close()
 
-    def measureAndLogF[A](timerName: String)(fa: IO[A]): IO[A] =
+    def measureAndLogF[A](timerName: String)(fa: F[A]): F[A] =
       for {
-        t <- IO(registry.timer(timerName).time())
+        t <- Sync[F].delay(registry.timer(timerName).time())
         a <- fa
-        _ <- IO(t.stop)
+        _ <- Sync[F].delay(t.stop)
       } yield a
 
   }
