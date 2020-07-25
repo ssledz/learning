@@ -1,8 +1,11 @@
 package io.github.ssledz.domain
 
+import java.util
+
 import javax.persistence._
 
 import scala.beans.BeanProperty
+import scala.jdk.CollectionConverters._
 
 @Entity
 @Table(name = "employee")
@@ -23,6 +26,14 @@ class Employee {
   var lastName: String = _
 
   def getId: Long = id
+
+  @ManyToMany
+  @JoinTable(name = "proj_emp", joinColumns = Array(new JoinColumn(name = "emp_id")), inverseJoinColumns = Array(new JoinColumn(name = "proj_id")))
+  private var projects: util.List[Project] = new util.ArrayList[Project]()
+
+  def getProjects: List[Project] = projects.asScala.toList
+
+  def addProject(p: Project): Unit = projects.add(p)
 
   override def toString: String = s"Employee(id=$id)"
 }

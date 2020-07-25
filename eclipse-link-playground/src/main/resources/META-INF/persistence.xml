@@ -4,9 +4,16 @@
     <persistence-unit name="default" transaction-type="RESOURCE_LOCAL">
         <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
         <class>io.github.ssledz.domain.Employee</class>
+        <class>io.github.ssledz.domain.Project</class>
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
         <properties>
-            <property name="eclipselink.logging.level" value="FINE"/>
+            <property name="eclipselink.logging.thread" value="true"/>
+            <property name="eclipselink.logging.session" value="true"/>
+            <property name="eclipselink.logging.timestamp" value="true"/>
+            <property name="eclipselink.logging.level" value="ALL"/>
+            <property name="eclipselink.logging.level.sql" value="ALL"/>
+            <property name="eclipselink.logging.parameters" value="true"/>
+<!--            <property name="eclipselink.logging.logger" value="org.eclipse.persistence.logging.slf4j.SLF4JLogger"/>-->
             <property name="eclipselink.ddl-generation" value="create-tables"/>
             <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/eclipse_link_test?serverTimezone=UTC"/>
             <property name="javax.persistence.jdbc.user" value="test"/>

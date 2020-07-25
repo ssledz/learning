@@ -8,6 +8,7 @@
     </appender>
 
     <logger name="io.github.ssledz" level="debug"/>
+    <logger name="eclipselink" level="all"/>
 
     <root level="info">
         <appender-ref ref="STDOUT"/>
