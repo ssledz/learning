@@ -11,7 +11,11 @@ object Main extends App {
 
     private val id = EntityManager.id.incrementAndGet()
 
-    private val hugeData = (1 to 1000000).toList
+    private var hugeData = (1 to 1000000).toList
+
+    def close(): Unit = {
+      hugeData = null
+    }
 
     def persist(entity: Object): Unit = {
       //      println(s"persisting entity: $entity")
@@ -29,20 +33,42 @@ object Main extends App {
 
   class Transactor {
 
-    val ems: ThreadLocal[EntityManager] = new ThreadLocal[EntityManager] {
+    private val emStore: ThreadLocal[EntityManager] = new ThreadLocal[EntityManager] {
       override def finalize(): Unit = {
         println("ems gc")
       }
     }
 
-    def em: EntityManager = {
-      var em = ems.get()
+    private val ems: AtomicReference[Map[EntityManager, Thread]] = new AtomicReference(Map.empty)
+
+    private def register(em: EntityManager): EntityManager = {
+      ems.updateAndGet((xs: Map[EntityManager, Thread]) => xs + (em -> Thread.currentThread()))
+      em
+    }
+
+    private def getOrNew: EntityManager = {
+      var em = emStore.get()
       if (em == null) {
         em = new EntityManager
-        ems.set(em)
+        emStore.set(em)
       }
       em
     }
+
+    import ThreadLocalSyntax._
+
+    private def closeEm(em: EntityManager, thread: Thread): Unit = {
+
+      em.close()
+      emStore.removeT(thread)
+    }
+
+    def close(): Unit = ems.get().foreach { case (em, thread) => closeEm(em, thread) }
+
+    def em: EntityManager = register(getOrNew)
+
+    def get(ths: List[Thread]): List[EntityManager] = ths.flatMap(emStore.getT)
+
   }
 
   case class User(name: String)
@@ -50,8 +76,6 @@ object Main extends App {
   class UserDao {
     def saveUser(u: User)(implicit tr: Transactor): Unit = tr.em.persist(u)
   }
-
-  import ThreadLocalSyntax._
 
   import concurrent.ExecutionContext.Implicits.global
 
@@ -73,11 +97,10 @@ object Main extends App {
       threads.updateAndGet(Thread.currentThread() :: _)
       userDao.saveUser(User("user" + acc.incrementAndGet()))
     })
-    Future.sequence(fs)
     Await.result(Future.sequence(fs), 10.second)
-    val p = threads.get().map(tr.ems.getT).map(_.toString).mkString("[", ",", "]")
+    val p = tr.get(threads.get()).map(_.toString).mkString("[", ",", "]")
     println(p)
-//    threads.get().foreach(tr.ems.removeT)
+    tr.close()
     Thread.sleep(1000)
   }
 
