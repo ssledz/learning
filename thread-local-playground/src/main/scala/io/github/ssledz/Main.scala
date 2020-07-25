@@ -61,8 +61,12 @@ object Main extends App {
 
   def usedMemory: Long = (Runtime.getRuntime.totalMemory - Runtime.getRuntime.freeMemory) / 1024 / 1024
 
+  val start = System.currentTimeMillis()
+
+  def duration: Long = (System.currentTimeMillis() - start) / 1000
+
   while (true) {
-    println("used memory: " + usedMemory + " MB")
+    println(s"${duration}s used memory: $usedMemory MB")
     implicit val tr = new Transactor
     val threads = new AtomicReference[List[Thread]](List.empty)
     val fs = (1 to 8).map(_ => Future {
@@ -73,6 +77,7 @@ object Main extends App {
     Await.result(Future.sequence(fs), 10.second)
     val p = threads.get().map(tr.ems.getT).map(_.toString).mkString("[", ",", "]")
     println(p)
+//    threads.get().foreach(tr.ems.removeT)
     Thread.sleep(1000)
   }
 
