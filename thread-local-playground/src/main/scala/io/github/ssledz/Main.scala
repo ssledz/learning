@@ -12,8 +12,25 @@ object Main extends App {
 
   implicit val ec = ExecutionContext.fromExecutorService(Executors.newCachedThreadPool())
 
-//  entityManagerInConcurrentEnv()
-    transactorExample()
+  entityManagerInSingleThreadedEnv()
+  //  entityManagerInConcurrentEnv()
+//  transactorExample()
+
+  def entityManagerInSingleThreadedEnv(): Unit = {
+    val jpaService = new JpaService
+    val userDao = new JpaUserDao(jpaService)
+    val acc = new AtomicInteger(1)
+    val start = System.currentTimeMillis()
+
+    def duration: Long = (System.currentTimeMillis() - start) / 1000
+
+    while (true) {
+      println(s"${duration}s used memory: $usedMemory MB")
+      val fs = (1 to 8).map(_ => userDao.saveUser(User("user" + acc.incrementAndGet())))
+      Thread.sleep(1000)
+      jpaService.closeEm()
+    }
+  }
 
   def entityManagerInConcurrentEnv(): Unit = {
     val jpaService = new JpaService
@@ -51,8 +68,8 @@ object Main extends App {
         userDao.saveUser(User("user" + acc.incrementAndGet()))
       })
       Await.result(Future.sequence(fs), 10.second)
-//      val p = tr.get(threads.get()).map(_.toString).mkString("[", ",", "]")
-//      println(p)
+      //      val p = tr.get(threads.get()).map(_.toString).mkString("[", ",", "]")
+      //      println(p)
       Thread.sleep(100)
       tr.close()
     }
