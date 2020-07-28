@@ -35,6 +35,7 @@ object OpenSessionInViewExample extends App with LazyLogging {
   emf.getCache.evictAll()
   logger.info("emf.close()")
   emf.close()
+  Thread.sleep(2000)
 
   // calls db even if emf is closed !!!
   logger.info("{} projects: {}", newEmp, newEmp.getProjects)
