@@ -33,7 +33,10 @@ class Employee {
 
   def getProjects: List[Project] = projects.asScala.toList
 
-  def addProject(p: Project): Unit = projects.add(p)
+  def addProject(p: Project): Project = {
+    projects.add(p)
+    p
+  }
 
   override def toString: String = s"Employee(id=$id)"
 }
