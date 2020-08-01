@@ -6,6 +6,7 @@
         <class>io.github.ssledz.domain.Employee</class>
         <class>io.github.ssledz.domain.Project</class>
         <exclude-unlisted-classes>true</exclude-unlisted-classes>
+        <!-- https://www.eclipse.org/eclipselink/documentation/2.6/jpa/extensions/persistenceproperties_ref.htm#CACDCCEG2  -->
         <properties>
             <property name="eclipselink.profiler" value="PerformanceMonitor"/>
             <property name="eclipselink.weaving" value="true"/>
