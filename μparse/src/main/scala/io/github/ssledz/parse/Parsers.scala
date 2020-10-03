@@ -16,7 +16,7 @@ object Parsers {
 
   def map2[A, B, C](p: Parser[A], p2: => Parser[B])(f: (A, B) => C): Parser[C] = map(product(p, p2))(f.tupled)
 
-  def many[A](p: Parser[A]): Parser[List[A]] = or(map2(p, many(p))(_ :: _), succeed(List.empty))
+  def many[A](p: Parser[A]): Parser[List[A]] = or(attempt(map2(p, many(p))(_ :: _)), succeed(List.empty))
 
   def listOfN[A](n: Int, p: Parser[A]): Parser[List[A]] =
     if (n == 0) succeed(List.empty[A]) else map2(p, listOfN(n - 1, p))(_ :: _)
@@ -44,17 +44,32 @@ object Parsers {
 
   def label[A](msg: String)(p: Parser[A]): Parser[A] = loc => p(loc).mapError(_.label(msg))
 
-  def or[A](s1: Parser[A], s2: => Parser[A]): Parser[A] = ???
+  def or[A](p1: Parser[A], p2: => Parser[A]): Parser[A] = loc =>
+    p1(loc) match {
+      case Failure(_, false) => p2(loc)
+      case other => other
+    }
 
   def many1[A](p: Parser[A]): Parser[List[A]] = ???
 
-  def slice[A](p: Parser[A]): Parser[String] = ???
+  def slice[A](p: Parser[A]): Parser[String] = loc =>
+    p(loc) match {
+      case Success(_, charsConsumed) => Success(loc.in.take(charsConsumed), charsConsumed)
+      case err@Failure(_, _) => err
+    }
 
-  def attempt[A](p: Parser[A]): Parser[A] = ???
+  def attempt[A](p: Parser[A]): Parser[A] = loc =>
+    p(loc) match {
+      case Failure(e, true) => Failure(e, false)
+      case other => other
+    }
 
   def flatMap[A, B](p: Parser[A])(f: A => Parser[B]): Parser[B] = loc => p(loc) match {
-    case Success(a, charsConsumed) => f(a)(loc.advanceBy(charsConsumed)).advanceSuccess(charsConsumed)
-    case err@Failure(_) => err
+    case Success(a, charsConsumed) =>
+      f(a)(loc.advanceBy(charsConsumed))
+        .addCommit(charsConsumed != 0)
+        .advanceSuccess(charsConsumed)
+    case err@Failure(_, _) => err
   }
 
   implicit def ops[A](p: Parser[A]): ParserOps[A] = new ParserOps[A](p)
@@ -99,7 +114,7 @@ object Parsers {
 
   sealed trait Result[+A] {
     def mapError(f: ParseError => ParseError): Result[A] = this match {
-      case Failure(e) => Failure(f(e))
+      case Failure(e, isCommitted) => Failure(f(e), isCommitted)
       case _ => this
     }
 
@@ -107,11 +122,16 @@ object Parsers {
       case Success(a, m) => Success(a, m + n)
       case _ => this
     }
+
+    def addCommit(isCommitted: Boolean): Result[A] = this match {
+      case Failure(e, c) => Failure(e, c || isCommitted)
+      case _ => this
+    }
   }
 
   case class Success[+A](get: A, charsConsumed: Int) extends Result[A]
 
-  case class Failure(get: ParseError) extends Result[Nothing]
+  case class Failure(get: ParseError, isCommitted: Boolean = true) extends Result[Nothing]
 
   object Failure {
     val Empty: Failure = Failure(ParseError(List.empty))
