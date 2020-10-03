@@ -8,7 +8,7 @@ object Parsers {
 
   def run[A](p: Parser[A])(input: String): Result[A] = p(Location(input, 0))
 
-  def char(c: Char): Parser[Char] = map(string(c.toString))(_.charAt(0))
+  implicit def char(c: Char): Parser[Char] = map(string(c.toString))(_.charAt(0))
 
   def succeed[A](a: A): Parser[A] = _ => Success(a, 0)
 
@@ -27,12 +27,12 @@ object Parsers {
       b <- p2
     } yield (a, b)
 
-  def string(s: String): Parser[String] =
+  implicit def string(s: String): Parser[String] =
     scope(s"Expected: $s") { loc =>
       if (loc.in.startsWith(s)) Success(s, s.length) else Failure.Empty
     }
 
-  def regex(r: Regex): Parser[String] = scope(s"Expected: $r") { loc =>
+  implicit def regex(r: Regex): Parser[String] = scope(s"Expected: $r") { loc =>
     r.findFirstIn(loc.in) match {
       case Some(value) => Success(value, value.length)
       case None => Failure.Empty
@@ -50,7 +50,11 @@ object Parsers {
       case other => other
     }
 
-  def many1[A](p: Parser[A]): Parser[List[A]] = ???
+  def many1[A](p: Parser[A]): Parser[List[A]] =
+    for {
+      a <- p
+      as <- many[A](p)
+    } yield a :: as
 
   def slice[A](p: Parser[A]): Parser[String] = loc =>
     p(loc) match {
@@ -74,6 +78,10 @@ object Parsers {
 
   implicit def ops[A](p: Parser[A]): ParserOps[A] = new ParserOps[A](p)
 
+  implicit def asStringParser[A](a: A)(implicit f: A => Parser[String]): ParserOps[String] = new ParserOps(f(a))
+
+  implicit def asCharParser[A](a: A)(implicit f: A => Parser[Char]): ParserOps[Char] = new ParserOps(f(a))
+
   class ParserOps[A](val p: Parser[A]) extends AnyVal {
 
     def flatMap[B](f: A => Parser[B]): Parser[B] = Parsers.flatMap(p)(f)
@@ -85,6 +93,16 @@ object Parsers {
     def or[B >: A](p2: => Parser[B]): Parser[B] = Parsers.or(p, p2)
 
     def |[B >: A](p2: => Parser[B]): Parser[B] = Parsers.or(p, p2)
+
+    def many: Parser[List[A]] = Parsers.many(p)
+
+    def slice: Parser[String] = Parsers.slice(p)
+
+    def attempt: Parser[A] = Parsers.attempt(p)
+
+    def many1: Parser[List[A]] = Parsers.many1(p)
+
+    def run(input: String): Result[A] = Parsers.run(p)(input)
 
   }
 

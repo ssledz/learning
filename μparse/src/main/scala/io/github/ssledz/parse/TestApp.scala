@@ -20,6 +20,10 @@ object TestApp extends App {
   println(run(p1)("abcabcabcdefg"))
 
   println(run(slice(many(attempt(char('a')) | char('b'))))("aaba"))
+  println(run(slice(many(attempt(char('a')) | char('b'))))(""))
+  println(run(slice(many1(attempt(char('a')) | char('b'))))(""))
 
-
+  println(('a'.attempt | 'b').many.run("abba"))
+  
+  println(('a'.attempt | 'b').many.slice.run("abba"))
 }
