@@ -6,6 +6,8 @@ object TestApp extends App {
 
   println(run(abc)("abcdefg"))
   println(run(abc)("1abcdefg"))
+  println(run(succeed(1))("abc"))
 
+  println(run(abc ** string("defg"))("abcdefg"))
 
 }

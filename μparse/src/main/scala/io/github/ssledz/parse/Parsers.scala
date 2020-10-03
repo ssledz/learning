@@ -10,7 +10,7 @@ object Parsers {
 
   def char(c: Char): Parser[Char] = map(string(c.toString))(_.charAt(0))
 
-  def succeed[A](a: A): Parser[A] = map(string(""))(_ => a)
+  def succeed[A](a: A): Parser[A] = _ => Success(a, 0)
 
   def map[A, B](p: Parser[A])(f: A => B): Parser[B] = flatMap(p)(f andThen succeed)
 
@@ -29,11 +29,11 @@ object Parsers {
 
   def string(s: String): Parser[String] =
     scope(s"Expected: $s") { loc =>
-      if (loc.input.startsWith(s)) Success(s, s.length) else Failure.Empty
+      if (loc.in.startsWith(s)) Success(s, s.length) else Failure.Empty
     }
 
   def regex(r: Regex): Parser[String] = scope(s"Expected: $r") { loc =>
-    r.findFirstIn(loc.input) match {
+    r.findFirstIn(loc.in) match {
       case Some(value) => Success(value, value.length)
       case None => Failure.Empty
     }
@@ -53,7 +53,7 @@ object Parsers {
   def attempt[A](p: Parser[A]): Parser[A] = ???
 
   def flatMap[A, B](p: Parser[A])(f: A => Parser[B]): Parser[B] = loc => p(loc) match {
-    case Success(a, charsConsumed) => f(a)(loc.advanceBy(charsConsumed))
+    case Success(a, charsConsumed) => f(a)(loc.advanceBy(charsConsumed)).advanceSuccess(charsConsumed)
     case err@Failure(_) => err
   }
 
@@ -83,12 +83,14 @@ object Parsers {
     def label[A](s: String): ParseError = ParseError(latestLoc.map((_, s)).toList)
   }
 
-  case class Location(input: String, offset: Int) {
+  case class Location(private val input: String, offset: Int) {
     lazy val line: Int = input.slice(0, offset + 1).count(_ == '\n') + 1
     lazy val col: Int = input.slice(0, offset + 1).lastIndexOf('\n') match {
       case -1 => offset + 1
       case lineStart => offset - lineStart
     }
+
+    def in: String = input.substring(offset)
 
     def advanceBy(n: Int): Location = copy(offset = offset + n)
 
@@ -98,6 +100,11 @@ object Parsers {
   sealed trait Result[+A] {
     def mapError(f: ParseError => ParseError): Result[A] = this match {
       case Failure(e) => Failure(f(e))
+      case _ => this
+    }
+
+    def advanceSuccess(n: Int): Result[A] = this match {
+      case Success(a, m) => Success(a, m + n)
       case _ => this
     }
   }
