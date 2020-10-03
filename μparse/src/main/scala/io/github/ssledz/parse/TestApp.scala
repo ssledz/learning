@@ -24,6 +24,10 @@ object TestApp extends App {
   println(run(slice(many1(attempt(char('a')) | char('b'))))(""))
 
   println(('a'.attempt | 'b').many.run("abba"))
-  
+
   println(('a'.attempt | 'b').many.slice.run("abba"))
+  println(('a'.attempt | 'b').many.slice.run("abcba"))
+
+  println(('a'.attempt | 'b').times(3).slice.run("abb"))
+  println(('a'.attempt | 'b').times(3).slice.run("abcb"))
 }

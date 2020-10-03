@@ -18,8 +18,8 @@ object Parsers {
 
   def many[A](p: Parser[A]): Parser[List[A]] = or(attempt(map2(p, many(p))(_ :: _)), succeed(List.empty))
 
-  def listOfN[A](n: Int, p: Parser[A]): Parser[List[A]] =
-    if (n == 0) succeed(List.empty[A]) else map2(p, listOfN(n - 1, p))(_ :: _)
+  def timesN[A](n: Int, p: Parser[A]): Parser[List[A]] =
+    if (n == 0) succeed(List.empty[A]) else map2(p, timesN(n - 1, p))(_ :: _)
 
   def product[A, B](p: Parser[A], p2: => Parser[B]): Parser[(A, B)] =
     for {
@@ -68,13 +68,14 @@ object Parsers {
       case other => other
     }
 
-  def flatMap[A, B](p: Parser[A])(f: A => Parser[B]): Parser[B] = loc => p(loc) match {
-    case Success(a, charsConsumed) =>
-      f(a)(loc.advanceBy(charsConsumed))
-        .addCommit(charsConsumed != 0)
-        .advanceSuccess(charsConsumed)
-    case err@Failure(_, _) => err
-  }
+  def flatMap[A, B](p: Parser[A])(f: A => Parser[B]): Parser[B] = loc =>
+    p(loc) match {
+      case Success(a, charsConsumed) =>
+        f(a)(loc.advanceBy(charsConsumed))
+          .addCommit(charsConsumed != 0)
+          .advanceSuccess(charsConsumed)
+      case err@Failure(_, _) => err
+    }
 
   implicit def ops[A](p: Parser[A]): ParserOps[A] = new ParserOps[A](p)
 
@@ -93,6 +94,8 @@ object Parsers {
     def or[B >: A](p2: => Parser[B]): Parser[B] = Parsers.or(p, p2)
 
     def |[B >: A](p2: => Parser[B]): Parser[B] = Parsers.or(p, p2)
+
+    def times(n: Int): Parser[List[A]] = Parsers.timesN(n, p)
 
     def many: Parser[List[A]] = Parsers.many(p)
 
