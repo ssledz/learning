@@ -1,8 +1,6 @@
-CREATE SCHEMA model;
 CREATE SCHEMA app;
 
-ALTER SCHEMA model OWNER TO munity;
-ALTER SCHEMA app OWNER TO munity;
+ALTER SCHEMA app OWNER TO test;
 
 CREATE SEQUENCE app.users_id_seq START 1;
 
@@ -11,6 +9,5 @@ CREATE TABLE app.users (
   user_name varchar NOT NULL UNIQUE,
   first_name varchar NOT NULL,
   last_name varchar NOT NULL,
-  email varchar NOT NULL,
-  password varchar NOT NULL
+  email varchar NOT NULL
 );

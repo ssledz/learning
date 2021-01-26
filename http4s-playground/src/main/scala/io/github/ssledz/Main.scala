@@ -6,15 +6,15 @@ import doobie.util.ExecutionContexts
 import io.circe.config.parser
 import io.circe.generic.auto._
 import io.circe.syntax._
+import io.github.ssledz.config.{AppConfig, DatabaseConfig}
+import io.github.ssledz.infrastructure.endpoints.AppInfoEndpoints
 import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.{Router, Server}
-import pl.cortb.ml.model.config.{AppConfig, _}
-import pl.cortb.ml.model.infrastructure.endpoints.AppInfoEndpoints
 
 object Main extends IOApp with LazyLogging {
 
-  def createServer[F[_] : ContextShift : ConcurrentEffect : Timer]: Resource[F, Server[F]] =
+  def createServer[F[_]: ContextShift: ConcurrentEffect: Timer]: Resource[F, Server[F]] =
     for {
       conf <- Resource.liftF(parser.decodePathF[F, AppConfig]("app"))
       serverEc <- ExecutionContexts.cachedThreadPool[F]

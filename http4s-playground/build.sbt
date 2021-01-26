@@ -14,18 +14,17 @@ lazy val root = (project in file(".")).settings(
 addCommandAlias("fmt", ";scalafmt ;test:scalafmt ;scalafmtSbt")
 addCommandAlias("showDep", ";dependencyBrowseGraph")
 
-def versionFrom(out: Option[sbtdynver.GitDescribeOutput]): String = {
+def versionFrom(out: Option[sbtdynver.GitDescribeOutput]): String =
   out match {
     case Some(v) =>
       s"${v.commitSuffix.distance}-${v.ref.value}"
     case None =>
       "0-undefined"
   }
-}
 
 lazy val commonSettings = Seq(
   name := "http4s-playground",
-  organization := "io.github.ssledz,
+  organization := "io.github.ssledz",
   scalaVersion := "2.13.1",
   mainClass in (Compile, run) := Some("io.github.ssledz.Main")
 )
@@ -35,7 +34,7 @@ val badConsoleFlags = Seq("-Xfatal-warnings", "-Ywarn-unused:imports")
 
 val consoleSettings = Seq(
   initialCommands := s"import pl.cortb._",
-  scalacOptions in(Compile, console) ~= (_.filterNot(badConsoleFlags.contains(_)))
+  scalacOptions in (Compile, console) ~= (_.filterNot(badConsoleFlags.contains(_)))
 )
 
 lazy val scalaOptions = scalacOptions ++= scalacOptionsForVersion(scalaVersion.value)

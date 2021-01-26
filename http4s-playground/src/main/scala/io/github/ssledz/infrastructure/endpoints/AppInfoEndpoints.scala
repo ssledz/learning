@@ -8,7 +8,7 @@ import org.http4s.circe.jsonEncoderOf
 import org.http4s.dsl.Http4sDsl
 import org.http4s.{EntityEncoder, HttpRoutes}
 
-class AppInfoEndpoints[F[_] : Sync] extends Http4sDsl[F] {
+class AppInfoEndpoints[F[_]: Sync] extends Http4sDsl[F] {
 
   private implicit val buildInfoJsonEncoder: Encoder[BuildInfo.type] = new Encoder[BuildInfo.type] {
     def apply(a: BuildInfo.type): Json = Json.obj(
@@ -30,5 +30,5 @@ class AppInfoEndpoints[F[_] : Sync] extends Http4sDsl[F] {
 }
 
 object AppInfoEndpoints {
-  def endpoints[F[_] : Sync](): HttpRoutes[F] = new AppInfoEndpoints[F].endpoints()
+  def endpoints[F[_]: Sync](): HttpRoutes[F] = new AppInfoEndpoints[F].endpoints()
 }

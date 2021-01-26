@@ -1,1 +1,1 @@
-docker-compose run -e PGPASSWORD=munity db psql -U munity -h db -d model_unity
+docker-compose run -e PGPASSWORD=test db psql -U test -h db -d test_db

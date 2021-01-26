@@ -1,4 +1,4 @@
-package io.github.ssledz.model
+package io.github.ssledz
 
 import io.circe.Decoder
 import io.circe.generic.semiauto.deriveDecoder
