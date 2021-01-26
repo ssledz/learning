@@ -10,14 +10,13 @@ import org.http4s.{EntityEncoder, HttpRoutes}
 
 class AppInfoEndpoints[F[_]: Sync] extends Http4sDsl[F] {
 
-  private implicit val buildInfoJsonEncoder: Encoder[BuildInfo.type] = new Encoder[BuildInfo.type] {
-    def apply(a: BuildInfo.type): Json = Json.obj(
+  private implicit val buildInfoJsonEncoder: Encoder[BuildInfo.type] = (a: BuildInfo.type) =>
+    Json.obj(
       ("name", a.name.asJson),
       ("version", a.version.asJson),
       ("scalaVersion", a.scalaVersion.asJson),
       ("sbtVersion", a.sbtVersion.asJson)
-    )
-  }
+  )
 
   private implicit val buildInfoEntityEncoder: EntityEncoder[F, BuildInfo.type] = jsonEncoderOf[F, BuildInfo.type]
 
