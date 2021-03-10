@@ -31,4 +31,8 @@ scalacOptions ++= Seq(
   "-Ymacro-annotations"
 )
 
+def filterScalacFlags(xs: Seq[String]) : Seq[String] = xs.filterNot(_ == "-Xfatal-warnings")
+
+scalacOptions.in(Compile) ~= filterScalacFlags
+
 enablePlugins(ScalafmtPlugin)
