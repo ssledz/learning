@@ -284,3 +284,8 @@ server7 = serveDirectoryWebApp "static-files"
 
 app7 :: Application
 app7 = serve staticAPI server7
+
+
+---------------------
+-- App8
+---------------------
