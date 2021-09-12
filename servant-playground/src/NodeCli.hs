@@ -27,6 +27,7 @@ import Servant
 import System.Directory
 import System.Process
 import System.Random
+import Safe
 
 data NodeCliConfig = NodeCliConfig
   { nlcOutDir :: String,
@@ -81,6 +82,7 @@ instance ToJSON CreateWalletParam
 instance FromJSON CreateWalletParam
 
 instance ToJSON Wallet
+instance FromJSON Wallet
 
 createWallet :: CreateWalletParam -> ReaderT NodeCliConfig IO Wallet
 createWallet cw = do
@@ -162,8 +164,26 @@ cli cfg args = readProcess "docker" (args' <> args) ""
         nlcDockerImage cfg
       ]
 
+listWallets :: ReaderT NodeCliConfig IO [Wallet]
+listWallets = do
+  walletStore <- fromReader getWalletDirStore
+  files <- liftIO $ map (filePath walletStore) <$> listDirectory walletStore
+  xs <- liftIO $ sequenceA (BSL.readFile <$> files)
+  return $ catMaybes (parseWallet <$> xs)
+ where
+   filePath :: FilePath -> FilePath -> FilePath
+   filePath root dir = root <> "/" <> dir <> "/meta.json"
+
+   parseWallet :: BLU.ByteString -> Maybe Wallet
+   parseWallet str = decode str
+
+getWalletById :: UUID -> ReaderT NodeCliConfig IO (Maybe Wallet)
+getWalletById uuid = headMay . filter (\ w -> toString uuid == identifier w) <$> listWallets
+
 type CliAPI = "tip" :> Get '[JSON] (Maybe Tip)
          :<|> "wallet" :> ReqBody '[JSON] CreateWalletParam :> Put '[JSON] Wallet
+         :<|> "wallet" :> Get '[JSON] [Wallet]
+         :<|> "wallet" :> Capture "id" UUID :> Get '[JSON] (Maybe Wallet)
 
 data Tip = Tip
   { epoch :: Integer,
@@ -179,17 +199,24 @@ instance ToJSON Tip
 instance FromJSON Tip
 
 cliServer :: Server CliAPI
-cliServer = handleTip :<|> handleCreateWallet
+cliServer = handleTip :<|> handleCreateWallet :<|> handleListWallets :<|> handleGetWallet
   where
+    handleGetWallet :: UUID -> Handler (Maybe Wallet)
+    handleGetWallet uuid = liftIO $ runReaderT (getWalletById uuid) cliDefaultConfig 
+
+    handleListWallets :: Handler [Wallet]
+    handleListWallets = liftIO $ runReaderT listWallets cliDefaultConfig
+
     handleCreateWallet :: CreateWalletParam -> Handler Wallet
     handleCreateWallet cwp = liftIO $ runReaderT (createWallet cwp) cliDefaultConfig
+
     handleTip :: Handler (Maybe Tip)
     handleTip = do
       json <- liftIO $ runTip
       let parsed = decode (BLU.fromString json) :: Maybe Tip
       liftIO $ putStrLn json
       liftIO $ putStrLn (show parsed)
-      return parsed 
+      return parsed
     runTip = runReaderT tip cliDefaultConfig
 
 cliAPI :: Proxy CliAPI

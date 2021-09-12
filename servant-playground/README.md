@@ -141,3 +141,12 @@ curl http://localhost:8081/myfile.txt
 ```
 
 ## app7
+
+
+## cli server
+
+```
+curl -X PUT -d '{"cwpName":"my supper wallet" }' \ 
+  -H 'Accept: application/json' \
+  -H 'Content-type: application/json' http://localhost:8081/wallet | jq 
+```
