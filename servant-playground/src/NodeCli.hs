@@ -66,6 +66,11 @@ getWalletDirStore = do
   cfg <- ask
   return $ nlcOutDir cfg <> "/wallets"
 
+getWalletDir :: UUID -> Reader NodeCliConfig String
+getWalletDir uuid = do
+  walletStore <- getWalletDirStore
+  return $ walletStore <> "/" <> toString uuid
+
 touchFile :: FilePath -> IO ()
 touchFile p = writeFile p ""
 
@@ -86,6 +91,9 @@ instance FromJSON CreateWalletParam
 instance ToJSON Wallet
 
 instance FromJSON Wallet
+
+testnetMagic :: NodeCliConfig -> [String]
+testnetMagic cfg = maybeToList (nlcTestnetMagic cfg) >>= \m -> ["--testnet-magic", m]
 
 createWallet :: CreateWalletParam -> ReaderT NodeCliConfig IO Wallet
 createWallet cw = do
@@ -132,8 +140,7 @@ createWallet cw = do
 
     addressGen :: NodeCliConfig -> IO ()
     addressGen cfg =
-      let testnetMagic = maybeToList (nlcTestnetMagic cfg) >>= \m -> ["--testnet-magic", m]
-          args =
+      let args =
             [ "address",
               "build",
               "--payment-verification-key-file",
@@ -143,7 +150,7 @@ createWallet cw = do
               "--out-file",
               "/out/wallet.addr"
             ]
-              <> testnetMagic
+              <> testnetMagic cfg
        in void $ cli cfg args
 
 cli :: NodeCliConfig -> [String] -> IO String
@@ -166,6 +173,29 @@ cli cfg args = readProcess "docker" (args' <> args) ""
         nlcOutDir cfg <> ":/out",
         nlcDockerImage cfg
       ]
+
+signTx :: UUID -> CardanoTransaction -> ReaderT NodeCliConfig IO CardanoTransaction
+signTx uuid tx = do
+  walletDir <- fromReader $ getWalletDir uuid
+  let signKey = walletDir <> "/" <> "payment.skey"
+  return tx
+  where
+    sign :: NodeCliConfig -> IO ()
+    sign cfg =
+      void $
+        cli
+          cfg
+          $ [ "transaction",
+              "sign",
+              "--tx-body-file",
+              "/out/tx.draft",
+              "--signing-key-file",
+              "/out/payment.skey",
+              "--testnet-magic $TESTNET_MAGIC",
+              "--out-file",
+              "/out/tx.signed"
+            ]
+            <> testnetMagic cfg
 
 listWallets :: ReaderT NodeCliConfig IO [Wallet]
 listWallets = do
@@ -245,8 +275,8 @@ cliServer :: Server CliAPI
 cliServer = handleTip :<|> handleCreateWallet :<|> handleListWallets :<|> handleGetWallet :<|> handleGetPubKey :<|> handleSignTx
   where
     handleSignTx :: UUID -> CardanoTransaction -> Handler CardanoTransaction
-    handleSignTx uuid tx = return tx
-  
+    handleSignTx uuid tx = liftIO $ runReaderT (signTx uuid tx) cliDefaultConfig
+
     handleGetPubKey :: UUID -> Handler (Maybe String)
     handleGetPubKey uuid = liftIO $ runReaderT (getWalletKey uuid "payment.vkey") cliDefaultConfig
 
