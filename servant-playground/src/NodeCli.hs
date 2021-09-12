@@ -10,7 +10,7 @@
 
 module NodeCli where
 
-import Control.Exception ( throw, Exception )
+import Control.Exception (Exception, IOException, catch, throw)
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Class
@@ -23,11 +23,12 @@ import Data.Maybe
 import Data.Typeable
 import Data.UUID
 import GHC.Generics
+import Network.HTTP.Media ((//), (/:))
+import Safe
 import Servant
 import System.Directory
 import System.Process
 import System.Random
-import Safe
 
 data NodeCliConfig = NodeCliConfig
   { nlcOutDir :: String,
@@ -79,9 +80,11 @@ data Wallet = Wallet
   deriving (Eq, Show, Generic)
 
 instance ToJSON CreateWalletParam
+
 instance FromJSON CreateWalletParam
 
 instance ToJSON Wallet
+
 instance FromJSON Wallet
 
 createWallet :: CreateWalletParam -> ReaderT NodeCliConfig IO Wallet
@@ -170,20 +173,60 @@ listWallets = do
   files <- liftIO $ map (filePath walletStore) <$> listDirectory walletStore
   xs <- liftIO $ sequenceA (BSL.readFile <$> files)
   return $ catMaybes (parseWallet <$> xs)
- where
-   filePath :: FilePath -> FilePath -> FilePath
-   filePath root dir = root <> "/" <> dir <> "/meta.json"
+  where
+    filePath :: FilePath -> FilePath -> FilePath
+    filePath root dir = root <> "/" <> dir <> "/meta.json"
 
-   parseWallet :: BLU.ByteString -> Maybe Wallet
-   parseWallet str = decode str
+    parseWallet :: BLU.ByteString -> Maybe Wallet
+    parseWallet str = decode str
 
 getWalletById :: UUID -> ReaderT NodeCliConfig IO (Maybe Wallet)
-getWalletById uuid = headMay . filter (\ w -> toString uuid == identifier w) <$> listWallets
+getWalletById uuid = headMay . filter (\w -> toString uuid == identifier w) <$> listWallets
 
-type CliAPI = "tip" :> Get '[JSON] (Maybe Tip)
-         :<|> "wallet" :> ReqBody '[JSON] CreateWalletParam :> Put '[JSON] Wallet
-         :<|> "wallet" :> Get '[JSON] [Wallet]
-         :<|> "wallet" :> Capture "id" UUID :> Get '[JSON] (Maybe Wallet)
+getWalletKey :: UUID -> String -> ReaderT NodeCliConfig IO (Maybe String)
+getWalletKey uuid keyFileName = do
+  walletStore <- fromReader getWalletDirStore
+  let filePath = walletStore <> "/" <> toString uuid <> "/" <> keyFileName
+  liftIO $
+    catch (Just <$> readFile filePath) $ \e -> do
+      putStrLn $ "Exception during getWalletKey: " <> show (e :: IOException)
+      return Nothing
+
+data CardanoTransaction = CardanoTransaction
+  { ctType :: String,
+    ctDescription :: String,
+    ctCborHex :: String
+  }
+  deriving (Eq, Show)
+
+instance ToJSON CardanoTransaction where
+  toJSON tx =
+    object
+      [ "type" .= ctType tx,
+        "description" .= ctDescription tx,
+        "cborHex" .= ctCborHex tx
+      ]
+
+instance FromJSON CardanoTransaction where
+  parseJSON (Object x) = CardanoTransaction <$> x .: "type" <*> x .: "description" <*> x .: "cborHex"
+  parseJSON _ = fail "Expected an Object"
+
+data JsonRaw
+
+type CliAPI =
+  "tip" :> Get '[JSON] (Maybe Tip)
+    :<|> "wallet" :> ReqBody '[JSON] CreateWalletParam :> Put '[JSON] Wallet
+    :<|> "wallet" :> Get '[JSON] [Wallet]
+    :<|> "wallet" :> Capture "id" UUID :> Get '[JSON] (Maybe Wallet)
+    :<|> "wallet" :> Capture "id" UUID :> "vkey" :> Get '[JsonRaw] (Maybe String)
+    :<|> "wallet" :> Capture "id" UUID :> "signTx" :> ReqBody '[JSON] CardanoTransaction :> Post '[JSON] CardanoTransaction
+
+instance Accept JsonRaw where
+  contentType _ = "application" // "json" /: ("charset", "utf-8")
+
+instance MimeRender JsonRaw (Maybe String) where
+  mimeRender _ (Just s) = BLU.fromString s
+  mimeRender _ Nothing = ""
 
 data Tip = Tip
   { epoch :: Integer,
@@ -199,10 +242,16 @@ instance ToJSON Tip
 instance FromJSON Tip
 
 cliServer :: Server CliAPI
-cliServer = handleTip :<|> handleCreateWallet :<|> handleListWallets :<|> handleGetWallet
+cliServer = handleTip :<|> handleCreateWallet :<|> handleListWallets :<|> handleGetWallet :<|> handleGetPubKey :<|> handleSignTx
   where
+    handleSignTx :: UUID -> CardanoTransaction -> Handler CardanoTransaction
+    handleSignTx uuid tx = return tx
+  
+    handleGetPubKey :: UUID -> Handler (Maybe String)
+    handleGetPubKey uuid = liftIO $ runReaderT (getWalletKey uuid "payment.vkey") cliDefaultConfig
+
     handleGetWallet :: UUID -> Handler (Maybe Wallet)
-    handleGetWallet uuid = liftIO $ runReaderT (getWalletById uuid) cliDefaultConfig 
+    handleGetWallet uuid = liftIO $ runReaderT (getWalletById uuid) cliDefaultConfig
 
     handleListWallets :: Handler [Wallet]
     handleListWallets = liftIO $ runReaderT listWallets cliDefaultConfig

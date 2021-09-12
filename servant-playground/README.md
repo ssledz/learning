@@ -150,3 +150,9 @@ curl -X PUT -d '{"cwpName":"my supper wallet" }' \
   -H 'Accept: application/json' \
   -H 'Content-type: application/json' http://localhost:8081/wallet | jq 
 ```
+
+```
+cat tx.draft | curl -s -X POST -d @- \
+  -H 'Content-type: application/json' \
+  http://localhost:8081/wallet/800d8734-2621-4ba6-a6aa-192882002f58/signTx | jq
+```
