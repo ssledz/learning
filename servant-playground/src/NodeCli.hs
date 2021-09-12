@@ -10,33 +10,136 @@
 
 module NodeCli where
 
-import System.Process
+import Control.Exception ( throw, Exception )
+import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Reader
-
-
-import Servant
 import Data.Aeson
 import Data.Aeson.Types
-import GHC.Generics
-import qualified Data.ByteString.UTF8 as BSU
+import qualified Data.ByteString.Lazy as BSL
 import qualified Data.ByteString.Lazy.UTF8 as BLU
+import Data.Maybe
+import Data.Typeable
+import Data.UUID
+import GHC.Generics
+import Servant
+import System.Directory
+import System.Process
+import System.Random
 
-data NodeCliConfig = NodeCliConfig {nlcOutDir :: String, nlcNetwork :: String, nlcContainerName :: String, nlcDockerImage :: String}
+data NodeCliConfig = NodeCliConfig
+  { nlcOutDir :: String,
+    nlcNetwork :: String,
+    nlcContainerName :: String,
+    nlcDockerImage :: String,
+    nlcTestnetMagic :: Maybe String
+  }
+  deriving (Eq, Show, Generic)
 
 cliDefaultConfig :: NodeCliConfig
 cliDefaultConfig =
   NodeCliConfig
-    {   nlcOutDir = "/home/ssledz/now/out"
-      , nlcNetwork = "testnet"
-      , nlcContainerName = "node-cli"
-      , nlcDockerImage = "inputoutput/cardano-node:1.29.0-rc2"
+    { nlcOutDir = "/home/ssledz/now/out",
+      nlcNetwork = "testnet",
+      nlcContainerName = "node-cli",
+      nlcDockerImage = "inputoutput/cardano-node:1.29.0-rc2",
+      nlcTestnetMagic = Just "8"
     }
 
 tip :: ReaderT NodeCliConfig IO String
-tip = do cfg <- ask
-         liftIO $ cli cfg [ "query", "tip", "--testnet-magic", "8"]
+tip = do
+  cfg <- ask
+  liftIO $ cli cfg ["query", "tip", "--testnet-magic", "8"]
+
+data NodeCliException = CreateWalletException !String deriving (Show, Typeable)
+
+instance Exception NodeCliException
+
+fromReader :: Monad m => Reader r a -> ReaderT r m a
+fromReader = reader . runReader
+
+getWalletDirStore :: Reader NodeCliConfig String
+getWalletDirStore = do
+  cfg <- ask
+  return $ nlcOutDir cfg <> "/wallets"
+
+touchFile :: FilePath -> IO ()
+touchFile p = writeFile p ""
+
+data CreateWalletParam = CreateWalletParam {cwpName :: String, cwpDesc :: Maybe String} deriving (Eq, Show, Generic)
+
+data Wallet = Wallet
+  { identifier :: String,
+    name :: String,
+    desc :: Maybe String,
+    address :: String
+  }
+  deriving (Eq, Show, Generic)
+
+instance ToJSON CreateWalletParam
+instance FromJSON CreateWalletParam
+
+instance ToJSON Wallet
+
+createWallet :: CreateWalletParam -> ReaderT NodeCliConfig IO Wallet
+createWallet cw = do
+  cfg <- ask
+  walletStore <- fromReader getWalletDirStore
+  liftIO $ putStrLn $ "walletStore: " <> walletStore
+  walletId <- liftIO genWalletId
+  let walletDir = walletStore <> "/" <> toString walletId
+  dirExists <- liftIO $ doesDirectoryExist walletDir
+  when dirExists $ throw (CreateWalletException $ "wallet " <> toString walletId <> " already exists")
+  liftIO $ createDirectoryIfMissing True walletDir
+  liftIO $ touchFiles walletDir
+  let cfg' = cfg {nlcOutDir = walletDir}
+  void $ liftIO $ sequenceA (keyGen cfg' <$> [("address", "payment"), ("stake-address", "stake")])
+  liftIO $ addressGen cfg'
+  walletAddress <- liftIO $ getAddress walletDir
+  let walletMeta = Wallet {identifier = toString walletId, name = cwpName cw, desc = cwpDesc cw, address = walletAddress}
+  liftIO $ BSL.writeFile (walletDir <> "/meta.json") $ encode walletMeta
+  return walletMeta
+  where
+    genWalletId :: IO UUID
+    genWalletId = randomIO
+
+    getAddress :: FilePath -> IO String
+    getAddress dir = readFile (dir <> "/" <> "wallet.addr")
+
+    touchFiles :: FilePath -> IO ()
+    touchFiles walletDir = do
+      let files = (\n -> walletDir <> "/" <> n) <$> ["payment.skey", "payment.vkey", "stake.skey", "stake.vkey", "wallet.addr"]
+      sequence_ (touchFile <$> files)
+
+    keyGen :: NodeCliConfig -> (String, String) -> IO ()
+    keyGen cfg (addressType, keyName) =
+      void $
+        cli
+          cfg
+          [ addressType,
+            "key-gen",
+            "--verification-key-file",
+            "/out/" <> keyName <> ".vkey",
+            "--signing-key-file",
+            "/out/" <> keyName <> ".skey"
+          ]
+
+    addressGen :: NodeCliConfig -> IO ()
+    addressGen cfg =
+      let testnetMagic = maybeToList (nlcTestnetMagic cfg) >>= \m -> ["--testnet-magic", m]
+          args =
+            [ "address",
+              "build",
+              "--payment-verification-key-file",
+              "/out/payment.vkey",
+              "--stake-verification-key-file",
+              "/out/stake.vkey",
+              "--out-file",
+              "/out/wallet.addr"
+            ]
+              <> testnetMagic
+       in void $ cli cfg args
 
 cli :: NodeCliConfig -> [String] -> IO String
 cli cfg args = readProcess "docker" (args' <> args) ""
@@ -55,33 +158,39 @@ cli cfg args = readProcess "docker" (args' <> args) ""
         "-v",
         "node-ipc:/ipc",
         "-v",
-        nlcOutDir cfg,
+        nlcOutDir cfg <> ":/out",
         nlcDockerImage cfg
       ]
 
 type CliAPI = "tip" :> Get '[JSON] (Maybe Tip)
+         :<|> "wallet" :> ReqBody '[JSON] CreateWalletParam :> Put '[JSON] Wallet
 
-data Tip = Tip 
-  { epoch :: Integer
-  , hash :: String
-  , slot :: Integer
-  , block :: Integer
-  , era :: String
-  } deriving (Eq, Show, Generic)
+data Tip = Tip
+  { epoch :: Integer,
+    hash :: String,
+    slot :: Integer,
+    block :: Integer,
+    era :: String
+  }
+  deriving (Eq, Show, Generic)
 
 instance ToJSON Tip
+
 instance FromJSON Tip
 
 cliServer :: Server CliAPI
-cliServer = do
-    json <- liftIO $ runTip
-    let parsed = decode (BLU.fromString json) :: Maybe Tip
-    liftIO $ putStrLn json
-    liftIO $ putStrLn (show parsed)
-    -- return $ Just (Tip 3111 "aasx" 1 2 "alonzo")
-    return parsed
-    where
-        runTip = runReaderT tip cliDefaultConfig
+cliServer = handleTip :<|> handleCreateWallet
+  where
+    handleCreateWallet :: CreateWalletParam -> Handler Wallet
+    handleCreateWallet cwp = liftIO $ runReaderT (createWallet cwp) cliDefaultConfig
+    handleTip :: Handler (Maybe Tip)
+    handleTip = do
+      json <- liftIO $ runTip
+      let parsed = decode (BLU.fromString json) :: Maybe Tip
+      liftIO $ putStrLn json
+      liftIO $ putStrLn (show parsed)
+      return parsed 
+    runTip = runReaderT tip cliDefaultConfig
 
 cliAPI :: Proxy CliAPI
 cliAPI = Proxy
