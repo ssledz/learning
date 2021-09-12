@@ -1,3 +1,7 @@
+Resources
+=========
+* [tutorial](https://docs.servant.dev/en/stable/tutorial/Server.html)
+
 ## having sources
 
 ```
@@ -123,3 +127,17 @@ curl -H 'Accept: text/html' http://localhost:8081/persons | tidy -i
   </table>
 
 ```
+
+## app5
+
+```
+curl http://localhost:8081/myfile.txt
+```
+
+## app6
+
+```
+curl http://localhost:8081/myfile.txt
+```
+
+## app7

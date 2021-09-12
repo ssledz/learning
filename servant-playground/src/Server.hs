@@ -8,7 +8,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 
-module Server (runApp, app1, app2, app3, app4) where
+module Server (runApp, app1, app2, app3, app4, app5, app6, app7) where
 
 import Prelude ()
 import Prelude.Compat
@@ -170,7 +170,7 @@ app3 :: Application
 app3 = serve api server3
 
 ---------------------
--- App3
+-- App4
 ---------------------
 
 data HTMLLucid
@@ -232,3 +232,55 @@ server4 = return people
 
 app4 :: Application
 app4 = serve personAPI server4
+
+
+---------------------
+-- App5
+---------------------
+
+type IOAPI1 = "myfile.txt" :> Get '[JSON] FileContent
+
+newtype FileContent = FileContent
+  { content :: String }
+  deriving Generic
+
+instance ToJSON FileContent
+
+server5 :: Server IOAPI1
+server5 = do
+  filecontent <- liftIO (readFile "myfile.txt")
+  return (FileContent filecontent)
+
+app5 :: Application
+app5 = serve (Proxy :: Proxy IOAPI1) server5
+
+---------------------
+-- App6
+---------------------
+
+server6 :: Server IOAPI1
+server6 = do
+  exists <- liftIO (doesFileExist "myfile.txt")
+  if exists
+    then liftIO (readFile "myfile.txt") >>= return . FileContent
+    else throwError custom404Err
+
+  where custom404Err = err404 { errBody = "myfile.txt just isn't there, please leave this server alone." }
+
+app6 :: Application
+app6 = serve (Proxy :: Proxy IOAPI1) server6
+
+---------------------
+-- App7
+---------------------
+
+type StaticAPI = "static" :> Raw
+
+staticAPI :: Proxy StaticAPI
+staticAPI = Proxy
+
+server7 :: Server StaticAPI
+server7 = serveDirectoryWebApp "static-files"
+
+app7 :: Application
+app7 = serve staticAPI server7
