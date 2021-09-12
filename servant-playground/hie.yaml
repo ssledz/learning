@@ -1,0 +1,7 @@
+cradle:
+  cabal:
+    - path: "src"
+      component: "lib:servant-playground"
+
+    - path: "app/Main.hs"
+      component: "servant-playground:exe:servant-playground"
